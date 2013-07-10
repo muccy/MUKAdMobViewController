@@ -7,13 +7,23 @@
 //
 
 #import "AppDelegate.h"
+#import "MyViewController.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    // Override point for customization after application launch.
+
+    MyViewController *contentViewController = [[MyViewController alloc] initWithNibName:nil bundle:nil];
+    
+    MUKAdMobViewController *adViewController = [[MUKAdMobViewController alloc] initWithContentViewController:contentViewController];
+    adViewController.bannerAdUnitID = @"a14fc76ac9f3142";
+    
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:adViewController];
+    
+    self.window.rootViewController = navController;
+    
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
     return YES;

@@ -18,7 +18,9 @@ Pod::Spec.new do |s|
     :tag => s.version.to_s
   }
 
-  s.requires_arc = true
-  s.source_files = 'MUKAdMobViewController/*.{h,m}'
+  s.requires_arc    = true
+  s.source_files    = 'MUKAdMobViewController/*.{h,m}'
+  s.compiler_flags  = '-Wdocumentation'
+  
   s.dependency 'AdMob', '~>6.4'
 end

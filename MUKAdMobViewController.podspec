@@ -1,13 +1,11 @@
 Pod::Spec.new do |s|
-  s.name = 'MUKAdMobViewController'
-  s.platform = :ios, '6.0'
-  s.version = '1.0'
-  s.summary = 'View controller which manages an AdMob banner, geolocation and interstitial presentation.'
-  s.license   = 'BSD 3-Clause'
-  s.homepage = 'https://github.com/muccy/MUKAdMobViewController'
-  s.author = {
-    'Marco Muccinelli' => 'muccymac@gmail.com'
-  }
+  s.name      = 'MUKAdMobViewController'
+  s.platform  = :ios, '6.0'
+  s.version   = '1.0'
+  s.summary   = 'View controller which manages an AdMob banner, geolocation and interstitial presentation.'
+  s.license   = { :type => 'BSD 3-Clause', :file => 'LICENSE' }
+  s.homepage  = 'https://github.com/muccy/MUKAdMobViewController'
+  s.author    = { 'Marco Muccinelli' => 'muccymac@gmail.com' }
 
   s.source = {
     :git => 'https://github.com/muccy/MUKAdMobViewController.git',

@@ -364,7 +364,6 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
     // Save power
     locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
-    locationManager.distanceFilter = 500.0;
     locationManager.activityType = CLActivityTypeOther;
     
     return locationManager;

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:MUKAdMobViewController"
+      name = "MUKAdMobViewController">
+      <FileRef
+         location = "group:../MUKAdMobViewController.podspec">
+      </FileRef>
+      <FileRef
+         location = "group:MUKAdMobViewController.h">
+      </FileRef>
+      <FileRef
+         location = "group:MUKAdMobViewController.m">
+      </FileRef>
+   </Group>
+   <FileRef
+      location = "group:Example/MUKAdMobViewControllerExample.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Example/Pods/Pods.xcodeproj">
+   </FileRef>
+</Workspace>

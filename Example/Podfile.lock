@@ -1,0 +1,17 @@
+PODS:
+  - AdMob (6.4.2)
+  - MUKAdMobViewController (1.0):
+    - AdMob (~> 6.4)
+
+DEPENDENCIES:
+  - MUKAdMobViewController (from `..`)
+
+EXTERNAL SOURCES:
+  MUKAdMobViewController:
+    :path: ..
+
+SPEC CHECKSUMS:
+  AdMob: f8d42e590e9fdb5f937356d127cc965843573be6
+  MUKAdMobViewController: 6b2f1c3e80ffeb6453cd582ec1f239197ed0e464
+
+COCOAPODS: 0.22.2

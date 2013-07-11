@@ -26,4 +26,8 @@
     return request;
 }
 
+- (BOOL)shouldRequestInterstitialAd {
+    return !self.interstitialPresentedInCurrentSession;
+}
+
 @end

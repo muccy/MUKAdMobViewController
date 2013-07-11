@@ -237,7 +237,7 @@
  @return It returns YES when both contentViewController and advertisingView 
  are not nil.
  */
-- (BOOL)shouldRequestBannerAds;
+- (BOOL)shouldRequestBannerAd;
 
 /**
  Requests new ad.
@@ -306,8 +306,7 @@
 /**
  Interstitial should be shown?
  
- @return YES if interstital request should start. Default returns YES if no
- interstitial has been presented in current session.
+ @return YES if interstitial request should start. Default returns NO.
  */
 - (BOOL)shouldRequestInterstitialAd;
 

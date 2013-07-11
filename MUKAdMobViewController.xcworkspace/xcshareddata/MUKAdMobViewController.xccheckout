@@ -3,34 +3,34 @@
 <plist version="1.0">
 <dict>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>E7B5E820-786B-4BC0-BE33-7DE8FC005F43</string>
+	<string>4E269AD5-462F-4A5B-B8D8-430B57D138EA</string>
 	<key>IDESourceControlProjectName</key>
 	<string>MUKAdMobViewController</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>1A1D25DF-D737-4AD4-BCD3-A3B322FE81AF</key>
-		<string>https://bitbucket.org/muccy/mukadmobviewcontroller.git</string>
+		<key>BFBF3C64-55E6-49C7-A52E-D28AFBE448F8</key>
+		<string>https://github.com/muccy/MUKAdMobViewController.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>MUKAdMobViewController.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>1A1D25DF-D737-4AD4-BCD3-A3B322FE81AF</key>
+		<key>BFBF3C64-55E6-49C7-A52E-D28AFBE448F8</key>
 		<string>..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://bitbucket.org/muccy/mukadmobviewcontroller.git</string>
+	<string>https://github.com/muccy/MUKAdMobViewController.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>1A1D25DF-D737-4AD4-BCD3-A3B322FE81AF</string>
+	<string>BFBF3C64-55E6-49C7-A52E-D28AFBE448F8</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>1A1D25DF-D737-4AD4-BCD3-A3B322FE81AF</string>
+			<string>BFBF3C64-55E6-49C7-A52E-D28AFBE448F8</string>
 			<key>IDESourceControlWCCName</key>
 			<string>MUKAdMobViewController</string>
 		</dict>

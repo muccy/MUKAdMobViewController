@@ -84,7 +84,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     [super viewWillAppear:animated];
     
     // Hide advertising if not appropriate
-    if ([self shouldRequestBannerAds] == NO) {
+    if ([self shouldRequestBannerAd] == NO) {
         [self setAdvertisingViewHidden:YES animated:NO completion:^(BOOL finished)
         {
 #pragma clang diagnostic push
@@ -138,7 +138,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)toggleAdvertisingViewVisibilityAnimated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
-    if ([self shouldRequestBannerAds]) {
+    if ([self shouldRequestBannerAd]) {
         // Should show ads
         
         if (self.bannerAdReceived) {
@@ -153,7 +153,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
             {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-retain-cycles"
-                if ([self shouldRequestBannerAds]) {
+                if ([self shouldRequestBannerAd]) {
                     [self requestNewBannerAd];
                 }
                  
@@ -279,7 +279,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 #pragma mark - Banner Request
 
-- (BOOL)shouldRequestBannerAds {
+- (BOOL)shouldRequestBannerAd {
     return self.contentViewController && self.advertisingView;
 }
 
@@ -414,7 +414,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 #pragma mark - Interstitial Ad
 
 - (BOOL)shouldRequestInterstitialAd {
-    return !self.interstitialPresentedInCurrentSession;
+    return NO;
 }
 
 - (void)requestNewInterstitialAd {
@@ -485,7 +485,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         // Restart ads or dispose
-        if ([self shouldRequestBannerAds]) {
+        if ([self shouldRequestBannerAd]) {
             [self requestNewBannerAd];
         }
         else {

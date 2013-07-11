@@ -2,20 +2,25 @@ Pod::Spec.new do |s|
   s.name = 'MUKAdMobViewController'
   s.platform = :ios, '6.0'
   s.version = '1.0'
-  s.summary = 'View controller with an AdMob banner.'
-  s.homepage = 'https://bitbucket.org/muccy/mukadmobviewcontroller'
+  s.summary = 'View controller which manages an AdMob banner, geolocation and interstitial presentation.'
+  s.license   = 'BSD 3-Clause'
+  s.homepage = 'https://github.com/muccy/MUKAdMobViewController'
   s.author = {
     'Marco Muccinelli' => 'muccymac@gmail.com'
   }
-  
-  s.license = {
-    :type => 'Internal',
-    :text => 'Internal usage only.'
-  }
 
   s.source = {
-    :git => 'https://muccy@bitbucket.org/muccy/mukadmobviewcontroller.git',
+    :git => 'https://github.com/muccy/MUKAdMobViewController.git',
     :tag => s.version.to_s
+  }
+
+  # Used by CocoaDocs
+  s.documentation = { :appledoc => [
+    '--no-repeat-first-par',
+    '--no-warn-invalid-crossref',
+    '--project-company "MeLive"',
+    '--company-id "it.melive"'
+    ]
   }
 
   s.requires_arc    = true

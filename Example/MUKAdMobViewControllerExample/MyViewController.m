@@ -48,8 +48,8 @@
     MyViewController *contentViewController = [[MyViewController alloc] initWithNibName:nil bundle:nil];
     
     AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
-    adViewController.bannerAdUnitID = @"a14fc76ac9f3142";
-    adViewController.interstitialAdUnitID = @"a14fc76ac9f3142";
+    adViewController.bannerAdUnitID = @"REPLACE ME";
+    adViewController.interstitialAdUnitID = @"REPLACE ME";
     
     [self.navigationController pushViewController:adViewController animated:YES];
 }

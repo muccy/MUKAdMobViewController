@@ -47,8 +47,9 @@
 - (IBAction)pushAnotherPressed:(id)sender {
     MyViewController *contentViewController = [[MyViewController alloc] initWithNibName:nil bundle:nil];
     
-    MUKAdMobViewController *adViewController = [[MUKAdMobViewController alloc] initWithContentViewController:contentViewController];
+    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
     adViewController.bannerAdUnitID = @"a14fc76ac9f3142";
+    adViewController.interstitialAdUnitID = @"a14fc76ac9f3142";
     
     [self.navigationController pushViewController:adViewController animated:YES];
 }

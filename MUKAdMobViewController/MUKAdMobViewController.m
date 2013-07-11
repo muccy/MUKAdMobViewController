@@ -12,10 +12,12 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 @property (nonatomic, strong, readwrite) UIScrollView *expandedAdViewContainer;
 
 @property (nonatomic, strong, readwrite) GADBannerView *bannerView;
+@property (nonatomic, strong, readwrite) GADInterstitial *interstitial;
 @property (nonatomic, readwrite) BOOL bannerAdReceived;
 @property (nonatomic, readwrite, getter = isAdViewExpanded) BOOL adViewExpanded;
 @property (nonatomic, strong, readwrite) UIView *expandedAdView;
 @property (nonatomic, readwrite) NSError *lastLocationManagerError;
+@property (nonatomic, readwrite) BOOL interstitialPresentedInCurrentSession;
 @end
 
 @implementation MUKAdMobViewController
@@ -48,6 +50,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)dealloc {
     self.locationManager.delegate = nil;
+    self.interstitial.delegate = nil;
     
     [self unregisterFromApplicationNotifications];
     [self disposeBannerView];
@@ -81,7 +84,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     [super viewWillAppear:animated];
     
     // Hide advertising if not appropriate
-    if ([self shouldShowAds] == NO) {
+    if ([self shouldRequestBannerAds] == NO) {
         [self setAdvertisingViewHidden:YES animated:NO completion:^(BOOL finished)
         {
 #pragma clang diagnostic push
@@ -90,6 +93,11 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
             [self disposeExpandedAdView];
 #pragma clang diagnostic pop
         }];
+    }
+    
+    // Request interstitial if needed
+    if ([self shouldRequestInterstitialAd]) {
+        [self requestNewInterstitialAd];
     }
 }
 
@@ -130,7 +138,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)toggleAdvertisingViewVisibilityAnimated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
-    if ([self shouldShowAds]) {
+    if ([self shouldRequestBannerAds]) {
         // Should show ads
         
         if (self.bannerAdReceived) {
@@ -145,8 +153,8 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
             {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-retain-cycles"
-                if ([self shouldShowAds]) {
-                    [self requestNewAd];
+                if ([self shouldRequestBannerAds]) {
+                    [self requestNewBannerAd];
                 }
                  
                 if (completionHandler) {
@@ -269,13 +277,13 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     }
 }
 
-#pragma mark - Request
+#pragma mark - Banner Request
 
-- (BOOL)shouldShowAds {
+- (BOOL)shouldRequestBannerAds {
     return self.contentViewController && self.advertisingView;
 }
 
-- (void)requestNewAd {
+- (void)requestNewBannerAd {
     // Invalidate postponed requests
     self.shouldRequestAdvertisingInViewDidAppear = NO;
     
@@ -288,12 +296,12 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     }
     else {
         // No new geolocation is needed
-        GADRequest *request = [self newAdRequest];
+        GADRequest *request = [self newBannerAdRequest];
         [self.bannerView loadRequest:request];
     }
 }
 
-- (GADRequest *)newAdRequest {
+- (GADRequest *)newBannerAdRequest {
     GADRequest *request = [GADRequest request];
     
     CLLocation *location = self.locationManager.location;
@@ -403,19 +411,48 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     return YES;
 }
 
-#pragma mark - Private — Application Notifications
+#pragma mark - Interstitial Ad
 
-- (void)registerToApplicationNotifications {
-    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-    [nc addObserver:self selector:@selector(applicationDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
-    [nc addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
+- (BOOL)shouldRequestInterstitialAd {
+    return !self.interstitialPresentedInCurrentSession;
 }
 
-- (void)unregisterFromApplicationNotifications {
-    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-    [nc removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
-    [nc removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
+- (void)requestNewInterstitialAd {
+    // Old one
+    self.interstitial.delegate = nil;
+    
+    // Create new one
+    self.interstitial = [self newInterstitial];
+
+    if ([self shouldStartGeolocation]) {
+        [self.locationManager startUpdatingLocation];
+    }
+    else {
+        // No new geolocation is needed
+        GADRequest *request = [self newInterstitialRequest];
+        [self.interstitial loadRequest:request];
+    }
 }
+
+- (GADInterstitial *)newInterstitial {
+    GADInterstitial *interstitial = [[GADInterstitial alloc] init];
+    interstitial.adUnitID = self.interstitialAdUnitID;
+    interstitial.delegate = self;
+    return interstitial;
+}
+
+- (GADRequest *)newInterstitialRequest {
+    GADRequest *request = [GADRequest request];
+    
+    CLLocation *location = self.locationManager.location;
+    if ([self isValidLocation:location]) {
+        [request setLocationWithLatitude:location.coordinate.latitude longitude:location.coordinate.longitude accuracy:location.horizontalAccuracy];
+    }
+    
+    return request;
+}
+
+#pragma mark - Application Notifications
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
     // Prepare GUI
@@ -429,14 +466,17 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     // -disposeBannerView call is postponed to -applicationWillEnterForeground
     
     [self disposeExpandedAdView];
-
+    
+    self.interstitialPresentedInCurrentSession = NO;
+    self.interstitial.delegate = nil;
+    self.interstitial = nil;
+    
     // Stop geolocation
     [self.locationManager stopUpdatingLocation];
     self.lastLocationManagerError = nil;
 }
 
-- (void)applicationWillEnterForeground:(NSNotification *)notification
-{
+- (void)applicationWillEnterForeground:(NSNotification *)notification {
     // It's not enough to postpone to -applicationWillEnterForeground: because
     // sometimes apps crash on -[GADObjectPrivate appDidBecomeInactive:] in
     // response of a notification. I'll try to dispose banner view after
@@ -445,13 +485,32 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         // Restart ads or dispose
-        if ([self shouldShowAds]) {
-            [self requestNewAd];
+        if ([self shouldRequestBannerAds]) {
+            [self requestNewBannerAd];
         }
         else {
             [self disposeBannerView];
         }
     });
+    
+    // Request interstitial if needed
+    if ([self shouldRequestInterstitialAd]) {
+        [self requestNewInterstitialAd];
+    }
+}
+
+#pragma mark - Private — Application Notifications
+
+- (void)registerToApplicationNotifications {
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(applicationDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [nc addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
+}
+
+- (void)unregisterFromApplicationNotifications {
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [nc removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
 }
 
 #pragma mark - Private — Inline Banner Expansion
@@ -560,6 +619,19 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     [self disposeExpandedAdView];
 }
 
+#pragma mark - <GADInterstitialDelegate>
+
+- (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
+    [ad presentFromRootViewController:self];
+    self.interstitialPresentedInCurrentSession = YES;
+}
+
+- (void)interstitial:(GADInterstitial *)ad didFailToReceiveAdWithError:(GADRequestError *)error
+{
+    self.interstitial.delegate = nil;
+    self.interstitial = nil;
+}
+
 #pragma mark - <CLLocationManagerDelegate>
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
@@ -578,12 +650,12 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
                 [self disposeExpandedAdView];
 
                 // Request new ad
-                [self requestNewAd];
+                [self requestNewBannerAd];
 #pragma clang diagnostic pop
             }];
         }
         else {
-            [self requestNewAd];
+            [self requestNewBannerAd];
         }
     }
 }
@@ -598,7 +670,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         self.lastLocationManagerError = error;
         
         // Request ad if needed
-        [self requestNewAd];
+        [self requestNewBannerAd];
     }
 }
 

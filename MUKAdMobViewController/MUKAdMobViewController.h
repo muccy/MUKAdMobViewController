@@ -1,11 +1,24 @@
 #import <UIKit/UIKit.h>
 #import "GADBannerView.h"
+#import "GADInterstitial.h"
 #import <CoreLocation/CoreLocation.h>
 
 /**
  View controller which manages AdMob interactions.
+ 
+ Implements those delegate methods (so call super implementation if you are 
+ subclassing):
+ 
+ - (void)adViewDidReceiveAd:(GADBannerView *)view;
+ - (void)adView:(GADBannerView *)view didFailToReceiveAdWithError:(GADRequestError *)error
+ 
+ - (void)interstitialDidReceiveAd:(GADInterstitial *)ad;
+ - (void)interstitial:(GADInterstitial *)ad didFailToReceiveAdWithError:(GADRequestError *)error;
+ 
+ - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations;
+ - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error;
  */
-@interface MUKAdMobViewController : UIViewController <GADBannerViewDelegate, CLLocationManagerDelegate>
+@interface MUKAdMobViewController : UIViewController <GADBannerViewDelegate, GADInterstitialDelegate, CLLocationManagerDelegate>
 
 /**
  View controller which displays content above advertising.
@@ -18,9 +31,19 @@
 @property (nonatomic, strong, readonly) GADBannerView *bannerView;
 
 /**
+ AdMob interstitial.
+ */
+@property (nonatomic, strong, readonly) GADInterstitial *interstitial;
+
+/**
  AdMob Ad Unit ID which will be used to create new banner views.
  */
 @property (nonatomic, copy) NSString *bannerAdUnitID;
+
+/**
+ AdMob Ad Unit ID which will ne used to create new interstitials.
+ */
+@property (nonatomic, copy) NSString *interstitialAdUnitID;
 
 /**
  View where bannerView is embedded.
@@ -44,6 +67,13 @@
  if banner view has received an error.
  */
 @property (nonatomic, readonly) BOOL bannerAdReceived;
+
+/**
+ Interstitial has been presented in this session.
+ 
+ This property will be set to false when app goes background.
+ */
+@property (nonatomic, readonly) BOOL interstitialPresentedInCurrentSession;
 
 /**
  Location manager used to retrieve a coordinate for ad request.
@@ -167,19 +197,19 @@
  @return It returns YES when both contentViewController and advertisingView 
  are not nil.
  */
-- (BOOL)shouldShowAds;
+- (BOOL)shouldRequestBannerAds;
 
 /**
  Requests new ad.
  */
-- (void)requestNewAd;
+- (void)requestNewBannerAd;
 
 /**
  Creates new ad request.
  
  @return A plain `GADRequest` instance.
  */
-- (GADRequest *)newAdRequest;
+- (GADRequest *)newBannerAdRequest;
 @end
 
 
@@ -229,4 +259,54 @@
  is not kCLErrorLocationUnknown.
  */
 - (BOOL)shouldStopGeolocationOnError:(NSError *)error;
+@end
+
+
+@interface MUKAdMobViewController (InterstitialAd)
+/**
+ Interstitial should be shown?
+ 
+ @return YES if interstital request should start. Default returns YES if no
+ interstitial has been presented in current session.
+ */
+- (BOOL)shouldRequestInterstitialAd;
+
+/**
+ Starts interstitial request.
+ */
+- (void)requestNewInterstitialAd;
+
+/**
+ Creates new interstitial.
+ 
+ @return New interstitial instance.
+ */
+- (GADInterstitial *)newInterstitial;
+
+/**
+ Creates new ad request for interstitial.
+ 
+ @return New ad request.
+ */
+- (GADRequest *)newInterstitialRequest;
+@end
+
+
+@interface MUKAdMobViewController (ApplicationNotifications)
+/**
+ UIApplicationDidEnterBackgroundNotification handler. Default implementation
+ hides advertising view, disposes expanded ad view, dismisses interstitial object
+ and stops geolocation.
+ 
+ @param notification Notification object.
+ */
+- (void)applicationDidEnterBackground:(NSNotification *)notification;
+
+/**
+ UIApplicationWillEnterForegroundNotification handler. Default implementation
+ restarts or disposes banner and interstitial ads (after a tiny interval).
+ 
+ @param notification Notification object.
+ */
+- (void)applicationWillEnterForeground:(NSNotification *)notification;
 @end

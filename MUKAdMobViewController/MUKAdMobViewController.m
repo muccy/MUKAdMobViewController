@@ -3,6 +3,8 @@
 static NSTimeInterval const kAdvertisingAnimationDuration = 0.3;
 static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 
+static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
+
 @interface MUKAdMobViewController ()
 @property (nonatomic) GADAdSize lastRequestedAdSize;
 @property (nonatomic) BOOL shouldRequestAdvertisingInViewDidAppear;
@@ -13,6 +15,7 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 @property (nonatomic, readwrite) BOOL bannerAdReceived;
 @property (nonatomic, readwrite, getter = isAdViewExpanded) BOOL adViewExpanded;
 @property (nonatomic, strong, readwrite) UIView *expandedAdView;
+@property (nonatomic, readwrite) NSError *lastLocationManagerError;
 @end
 
 @implementation MUKAdMobViewController
@@ -31,7 +34,12 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
         // Setup defaults
         _shouldRequestAdvertisingInViewDidAppear = YES;
         _lastRequestedAdSize = kGADAdSizeInvalid;
+        _requiresValidLocationToRequestNewAd = YES;
         
+        // Create location manager to get cached locations, eventually
+        _locationManager = [self newLocationManager];
+        
+        // Notifications subscription
         [self registerToApplicationNotifications];
     }
     
@@ -39,6 +47,8 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 }
 
 - (void)dealloc {
+    self.locationManager.delegate = nil;
+    
     [self unregisterFromApplicationNotifications];
     [self disposeBannerView];
     [self disposeExpandedAdView];
@@ -272,13 +282,26 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
     if (self.bannerView == nil) {
         self.bannerView = [self newBannerView];
     }
-
-    GADRequest *request = [self newAdRequest];
-    [self.bannerView loadRequest:request];
+    
+    if ([self shouldStartGeolocation]) {
+        [self.locationManager startUpdatingLocation];
+    }
+    else {
+        // No new geolocation is needed
+        GADRequest *request = [self newAdRequest];
+        [self.bannerView loadRequest:request];
+    }
 }
 
 - (GADRequest *)newAdRequest {
-    return [GADRequest request];
+    GADRequest *request = [GADRequest request];
+    
+    CLLocation *location = self.locationManager.location;
+    if ([self isValidLocation:location]) {
+        [request setLocationWithLatitude:location.coordinate.latitude longitude:location.coordinate.longitude accuracy:location.horizontalAccuracy];
+    }
+    
+    return request;
 }
 
 #pragma mark - Layout
@@ -325,6 +348,61 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
     return constraints;
 }
 
+#pragma mark - Geolocation
+
+- (CLLocationManager *)newLocationManager {
+    CLLocationManager *locationManager = [[CLLocationManager alloc] init];
+    locationManager.delegate = self;
+
+    // Save power
+    locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
+    locationManager.distanceFilter = 500.0;
+    locationManager.activityType = CLActivityTypeOther;
+    
+    return locationManager;
+}
+
+- (BOOL)isValidLocation:(CLLocation *)location {
+    if (location) {
+        if (location.horizontalAccuracy <= self.locationManager.desiredAccuracy &&
+            ABS([location.timestamp timeIntervalSinceNow]) <= kMaxLocationTimestampInterval)
+        {
+            return YES;
+        }
+    }
+    
+    return NO;
+}
+
+- (BOOL)shouldStartGeolocation {
+    // Last error can not be resolved
+    if ([self shouldStopGeolocationOnError:self.lastLocationManagerError]) {
+        return NO;
+    }
+    
+    // Invalid location with required location configuration
+    if (self.requiresValidLocationToRequestNewAd &&
+        ![self isValidLocation:self.locationManager.location])
+    {
+        return YES;
+    }
+    
+    // Every other case, including "Location services disabled"
+    return NO;
+}
+
+- (BOOL)shouldStopGeolocationOnError:(NSError *)error {
+    if ([error.domain isEqualToString:kCLErrorDomain] == NO) {
+        return NO;
+    }
+    
+    if (error.code == kCLErrorLocationUnknown) {
+        return NO;
+    }
+    
+    return YES;
+}
+
 #pragma mark - Private — Application Notifications
 
 - (void)registerToApplicationNotifications {
@@ -351,6 +429,10 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
     // -disposeBannerView call is postponed to -applicationWillEnterForeground
     
     [self disposeExpandedAdView];
+
+    // Stop geolocation
+    [self.locationManager stopUpdatingLocation];
+    self.lastLocationManagerError = nil;
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification
@@ -409,7 +491,7 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
     }
 }
 
-#pragma mark - Private: Layout
+#pragma mark - Private — Layout
 
 - (void)disposeAdvertisingAndContentLayoutConstraints {
     if ([self.advertisingAndContentLayoutConstraints count]) {
@@ -476,6 +558,48 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
     
     // Dispose expanded view
     [self disposeExpandedAdView];
+}
+
+#pragma mark - <CLLocationManagerDelegate>
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
+{
+    if ([self isValidLocation:manager.location]) {
+        // Get only one valid location
+        [manager stopUpdatingLocation];
+        
+        // Request ad if needed
+        if (self.isAdViewExpanded) {
+            [self setAdvertisingViewExpanded:NO toSize:CGSizeZero animated:YES completion:^ (BOOL finished)
+            {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-retain-cycles"
+                // Dispose expanded view
+                [self disposeExpandedAdView];
+
+                // Request new ad
+                [self requestNewAd];
+#pragma clang diagnostic pop
+            }];
+        }
+        else {
+            [self requestNewAd];
+        }
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    if ([self shouldStopGeolocationOnError:error]) {
+        // At kCLErrorLocationUnknown it keeps trying
+        // Otherwise you should stop
+        [manager stopUpdatingLocation];
+        
+        self.lastLocationManagerError = error;
+        
+        // Request ad if needed
+        [self requestNewAd];
+    }
 }
 
 @end

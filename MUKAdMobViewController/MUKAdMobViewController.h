@@ -1,10 +1,11 @@
 #import <UIKit/UIKit.h>
 #import "GADBannerView.h"
+#import <CoreLocation/CoreLocation.h>
 
 /**
  View controller which manages AdMob interactions.
  */
-@interface MUKAdMobViewController : UIViewController <GADBannerViewDelegate>
+@interface MUKAdMobViewController : UIViewController <GADBannerViewDelegate, CLLocationManagerDelegate>
 
 /**
  View controller which displays content above advertising.
@@ -43,6 +44,26 @@
  if banner view has received an error.
  */
 @property (nonatomic, readonly) BOOL bannerAdReceived;
+
+/**
+ Location manager used to retrieve a coordinate for ad request.
+ */
+@property (nonatomic, readonly) CLLocationManager *locationManager;
+
+/**
+ If true, ad request is sent only if there is a valid location inside location
+ manager. If there isn't and this property is set to YES, if start updating
+ location. Another -requestNewAd message will be sent after locationManager
+ finishes geolocation.
+ */
+@property (nonatomic) BOOL requiresValidLocationToRequestNewAd;
+
+/**
+ Stores last location manager error.
+ 
+ This property is nilled out when application goes background.
+ */
+@property (nonatomic, readonly) NSError *lastLocationManagerError;
 
 /**
  Default initializer.
@@ -173,4 +194,39 @@
  @return An array on NSLayoutConstraint objects.
  */
 - (NSArray *)layoutConstraintsForAdvertisingViewHidden:(BOOL)hidden expanded:(BOOL)expanded toTargetSize:(CGSize)targetSize;
+@end
+
+
+@interface MUKAdMobViewController (Geolocation)
+/**
+ Builds location manager created on initialization.
+ @return New location manager instance.
+ */
+- (CLLocationManager *)newLocationManager;
+
+/**
+ The location is to request advertising.
+ 
+ @param location The location to be inspected.
+ @return YES is location is recent and accurate enough.
+ */
+- (BOOL)isValidLocation:(CLLocation *)location;
+
+/**
+ Decide to start geolocation before to request new ad.
+ @return YES if you want to geolocate before to request new ad. Default returns
+ YES only if there isn't a valid cached location and
+ requiresValidLocationToRequestNewAd is true. It returns NO also if last location
+ manager error can not be resolved.
+ */
+- (BOOL)shouldStartGeolocation;
+
+/** 
+ Decide if location manager error is critical.
+ 
+ @param error Location manager generated error.
+ @return YES if error can not be recovered. Default returns YES when error code
+ is not kCLErrorLocationUnknown.
+ */
+- (BOOL)shouldStopGeolocationOnError:(NSError *)error;
 @end

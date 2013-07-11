@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
   s.requires_arc    = true
   s.source_files    = 'MUKAdMobViewController/*.{h,m}'
   s.compiler_flags  = '-Wdocumentation'
+  s.frameworks      = 'CoreLocation'
   
   s.dependency 'AdMob', '~>6.4'
 end

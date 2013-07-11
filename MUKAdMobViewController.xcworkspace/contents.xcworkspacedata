@@ -5,6 +5,9 @@
       location = "group:MUKAdMobViewController"
       name = "MUKAdMobViewController">
       <FileRef
+         location = "group:../MUKAdMobViewController.podspec">
+      </FileRef>
+      <FileRef
          location = "group:MUKAdMobViewController.h">
       </FileRef>
       <FileRef

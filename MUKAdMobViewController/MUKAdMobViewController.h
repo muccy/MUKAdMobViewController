@@ -17,6 +17,46 @@
  
  - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations;
  - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error;
+ 
+ 
+ ## Expandable banner expaination
+ 
+ AdMob mediation banner events can not manage expandable banners alone, because
+ AdMob mediation does not contemplate this size.
+ 
+ So, AdMob mediation banner event instances should post some notification when
+ an expand event is sent by mediated ad view, and another notification
+ when a shrink event is sent by mediated view.
+ 
+ What is more, if you change GADBannerView size at runtime and you try to access
+ mediatedView everything crashes (I suppose because it can not find a mediated
+ view with a matching size).
+ 
+ I succeeded with this workaround:
+ 1) Banner expanded notification received
+ 2) Test if banner is not expanded: if not, you can access mediatedView safely
+ 3) If mediatedView == notification's view set advertising expanded
+ 4) Extract mediated view
+    a) Retain mediated view in an ivar
+    b) Retain its delegate
+    c) Dispose GADBannerView
+    d) Insert retained expanded view into advertisingView (to fill it). Expanded
+       view is actually inserted in a scroll view in order not to cut out parts
+       of advertising.
+ This way I blocked mediation and I can set mediated view size freely.
+ 
+ To shrink it:
+ 1) Set advertising view hidden to YES, in order to hide banner and restore canonical
+ size (e.g.: 320x50)
+ 2) As animation finishes I recreate a GADBannerView, I add it above extended view
+ 3) You have to implement completion block and to call disposeExpandedAdView
+ (anyway it is disposed also in next `adViewDidReceiveAd:` invocation for security
+ reasons) and to load another request with requestNewAd.
+ This way I restored normal banner mediation.
+ 
+ So you do need to subclass MUKAdMobViewController and to provide notifications
+ handling and an implementation for retainDelegateOfExpandedAdView: and
+ releaseDelegateOfExpandableAdView:.
  */
 @interface MUKAdMobViewController : UIViewController <GADBannerViewDelegate, GADInterstitialDelegate, CLLocationManagerDelegate>
 

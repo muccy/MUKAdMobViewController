@@ -594,7 +594,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     
     // Height (adv view)
     if (expanded) {
-        NSLayoutConstraint *superviewConstraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.view attribute:NSLayoutAttributeHeight multiplier:1.0f constant:0.0f];
+        NSLayoutConstraint *superviewConstraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f];
         [constraints addObject:superviewConstraint];
         
         if (targetSize.height > 0.0f + FLT_EPSILON) {

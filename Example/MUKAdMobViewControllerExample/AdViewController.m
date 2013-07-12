@@ -26,8 +26,15 @@
     return request;
 }
 
+static BOOL AppReceivedInterstitial = NO;
+
 - (BOOL)shouldRequestInterstitialAd {
-    return !self.interstitialPresentedInCurrentSession;
+    return !AppReceivedInterstitial;
+}
+
+- (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
+    [super interstitialDidReceiveAd:ad];
+    AppReceivedInterstitial = YES;
 }
 
 @end

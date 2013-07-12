@@ -84,7 +84,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     [super viewWillAppear:animated];
     
     // Hide advertising if not appropriate
-    if ([self shouldRequestBannerAds] == NO) {
+    if ([self shouldRequestBannerAd] == NO) {
         [self setAdvertisingViewHidden:YES animated:NO completion:^(BOOL finished)
         {
 #pragma clang diagnostic push
@@ -129,16 +129,29 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     // Apply new constraints
     [self updateLayoutConstraintsForAdvertisingViewHidden:hidden expanded:NO toTargetSize:CGSizeZero];
     
+    // Set visible if needed
+    if (!hidden) {
+        self.advertisingView.hidden = NO;
+    }
+    
     // Animate if needed
     [UIView animateWithDuration:(animated ? kAdvertisingAnimationDuration : 0.0) delay:0.0f options:UIViewAnimationOptionAllowUserInteraction animations:^
      {
          [self.view layoutIfNeeded];
-     } completion:completionHandler];
+     } completion:^(BOOL finished) {
+         if (finished && hidden) {
+             self.advertisingView.hidden = YES;
+         }
+         
+         if (completionHandler) {
+             completionHandler(finished);
+         }
+     }];
 }
 
 - (void)toggleAdvertisingViewVisibilityAnimated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
-    if ([self shouldRequestBannerAds]) {
+    if ([self shouldRequestBannerAd]) {
         // Should show ads
         
         if (self.bannerAdReceived) {
@@ -153,7 +166,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
             {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-retain-cycles"
-                if ([self shouldRequestBannerAds]) {
+                if ([self shouldRequestBannerAd]) {
                     [self requestNewBannerAd];
                 }
                  
@@ -279,7 +292,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 #pragma mark - Banner Request
 
-- (BOOL)shouldRequestBannerAds {
+- (BOOL)shouldRequestBannerAd {
     return self.contentViewController && self.advertisingView;
 }
 
@@ -316,42 +329,11 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (NSArray *)layoutConstraintsForAdvertisingViewHidden:(BOOL)hidden expanded:(BOOL)expanded toTargetSize:(CGSize)targetSize
 {
-    NSMutableArray *constraints = [[NSMutableArray alloc] init];
+    NSMutableArray *constraints = [NSMutableArray array];
     
-    // Horizontal (adv view)
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
-    
-    // Bottom hook (adv view)
-    NSLayoutAttribute attribute = hidden ? NSLayoutAttributeTop : NSLayoutAttributeBottom;
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:attribute relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0f constant:0.0f]];
-    
-    // Height (adv view)
-    if (expanded) {
-        NSLayoutConstraint *superviewConstraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.view attribute:NSLayoutAttributeHeight multiplier:1.0f constant:0.0f];
-        [constraints addObject:superviewConstraint];
-        
-        if (targetSize.height > 0.0f + FLT_EPSILON) {
-            NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:targetSize.height];
-            constraint.priority = superviewConstraint.priority - 1;
-            [constraints addObject:constraint];
-        }
-    }
-    else {
-        CGSize estimatedAdSize = [self estimatedAdSize];
-        [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:estimatedAdSize.height]];
-    }
-    
-    // Horizontal (content view)
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
-    
-    // Vertical (content view)
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f]];
-    
-    UIView *bottomView = (expanded ? self.view : self.advertisingView);
-    NSLayoutAttribute referencedAttribute = (expanded ? NSLayoutAttributeBottom : NSLayoutAttributeTop);
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:bottomView attribute:referencedAttribute multiplier:1.0f constant:0.0f]];
+    [constraints addObjectsFromArray:[self advertisingViewLayoutConstraintsForAdvertisingViewHidden:hidden expanded:expanded toTargetSize:targetSize]];
+
+    [constraints addObjectsFromArray:[self contentViewLayoutConstraintsForAdvertisingViewHidden:hidden expanded:expanded toTargetSize:targetSize bottomHookedToAdvertisingView:[self shouldHookContentViewBottomToAdvertisingView]]];
     
     return constraints;
 }
@@ -364,7 +346,6 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
     // Save power
     locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
-    locationManager.distanceFilter = 500.0;
     locationManager.activityType = CLActivityTypeOther;
     
     return locationManager;
@@ -414,7 +395,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 #pragma mark - Interstitial Ad
 
 - (BOOL)shouldRequestInterstitialAd {
-    return !self.interstitialPresentedInCurrentSession;
+    return NO;
 }
 
 - (void)requestNewInterstitialAd {
@@ -485,7 +466,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         // Restart ads or dispose
-        if ([self shouldRequestBannerAds]) {
+        if ([self shouldRequestBannerAd]) {
             [self requestNewBannerAd];
         }
         else {
@@ -584,6 +565,132 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     }
     
     return adSize;
+}
+
+- (NSArray *)advertisingViewLayoutConstraintsForAdvertisingViewHidden:(BOOL)hidden expanded:(BOOL)expanded toTargetSize:(CGSize)targetSize
+{
+    NSMutableArray *constraints = [NSMutableArray array];
+    
+    // Horizontal (adv view)
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
+    
+    // Bottom hook (adv view)
+    NSLayoutAttribute attribute = hidden ? NSLayoutAttributeTop : NSLayoutAttributeBottom;
+    
+    id referencedItem;
+    NSLayoutAttribute referencedAttribute;
+    if ([self respondsToSelector:@selector(bottomLayoutGuide)]) {
+        referencedItem = [self bottomLayoutGuide];
+        referencedAttribute = hidden ? NSLayoutAttributeBottom : NSLayoutAttributeTop;
+    }
+    else {
+        referencedItem = self.view;
+        referencedAttribute = NSLayoutAttributeBottom;
+    }
+    
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:attribute relatedBy:NSLayoutRelationEqual toItem:referencedItem attribute:referencedAttribute multiplier:1.0f constant:0.0f]];
+    
+    
+    // Height (adv view)
+    if (expanded) {
+        NSLayoutConstraint *superviewConstraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.view attribute:NSLayoutAttributeHeight multiplier:1.0f constant:0.0f];
+        [constraints addObject:superviewConstraint];
+        
+        if (targetSize.height > 0.0f + FLT_EPSILON) {
+            NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:targetSize.height];
+            constraint.priority = superviewConstraint.priority - 1;
+            [constraints addObject:constraint];
+        }
+    }
+    else {
+        CGSize estimatedAdSize = [self estimatedAdSize];
+        [constraints addObject:[NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:estimatedAdSize.height]];
+    }
+    
+    return constraints;
+}
+
+- (NSArray *)contentViewLayoutConstraintsForAdvertisingViewHidden:(BOOL)hidden expanded:(BOOL)expanded toTargetSize:(CGSize)targetSize bottomHookedToAdvertisingView:(BOOL)bottomHookedToAdvertisingView
+{
+    NSMutableArray *constraints = [NSMutableArray array];
+    
+    // Horizontal (content view)
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
+    
+    // Vertical (content view)
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f]];
+    
+    // Bottom hook
+    id referencedItem;
+    NSLayoutAttribute referencedAttribute;
+    
+    if (expanded) {
+        referencedItem = self.view;
+        referencedAttribute = NSLayoutAttributeBottom;
+    }
+    else {
+        if (bottomHookedToAdvertisingView) {
+            referencedItem = self.advertisingView;
+            referencedAttribute = NSLayoutAttributeTop;
+        }
+        else {
+            referencedItem = self.view;
+            referencedAttribute = NSLayoutAttributeBottom;
+        }
+    }
+    
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:referencedItem attribute:referencedAttribute multiplier:1.0f constant:0.0f]];
+    
+    return constraints;
+}
+
+- (BOOL)hasBottomTranslucentBar {
+    if (self.tabBarController.tabBar &&
+        self.tabBarController.tabBar.hidden == NO &&
+        self.tabBarController.tabBar.isTranslucent)
+    {
+        return YES;
+    }
+    
+    if (self.navigationController.toolbar &&
+        self.navigationController.isToolbarHidden == NO &&
+        self.navigationController.toolbar.isTranslucent)
+    {
+        return YES;
+    }
+    
+    return NO;
+}
+
+- (BOOL)shouldHookContentViewBottomToAdvertisingView {
+    BOOL bottomHookedToAdvertisingView = NO;
+    
+    if ([self.contentViewController respondsToSelector:@selector(edgesForExtendedLayout)])
+    {
+        // iOS 7
+        
+        // Content layout not extended under bottom
+        if ((self.contentViewController.edgesForExtendedLayout & UIRectEdgeBottom) != UIRectEdgeBottom)
+        {
+            bottomHookedToAdvertisingView = YES;
+        }
+        
+        // Extends layout under bottom, excluding opaque bars (and advertising view
+        // is an opaque bar). Maybe we have a bar under advertising view? Check
+        // it out!
+        else if (![self hasBottomTranslucentBar] && self.contentViewController.extendedLayoutIncludesOpaqueBars == NO)
+        {
+            bottomHookedToAdvertisingView = YES;
+        }
+    }
+    else {
+        // iOS 6
+        bottomHookedToAdvertisingView = YES;
+    }
+
+    return bottomHookedToAdvertisingView;
 }
 
 #pragma mark - <GADBannerViewDelegate>

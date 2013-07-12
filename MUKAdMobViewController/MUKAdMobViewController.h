@@ -237,7 +237,7 @@
  @return It returns YES when both contentViewController and advertisingView 
  are not nil.
  */
-- (BOOL)shouldRequestBannerAds;
+- (BOOL)shouldRequestBannerAd;
 
 /**
  Requests new ad.
@@ -256,6 +256,19 @@
 @interface MUKAdMobViewController (Layout)
 /**
  Creates autolayout constraints to arrange views.
+ 
+ Content view controller is layed out horing extendedLayoutIncludesOpaqueBars and
+ edgesForExtendedLayout. That means, for example:
+ * On iOS 6, content view never goes under advertising view.
+ * On iOS 7, content view doesn't go under advertising view if
+   extendedLayoutIncludesOpaqueBars is set to NO (default) and no bottom translucent
+   bar is displayed (e.g. tab bar).
+ * On iOS 7, content view doesn't go under advertising view if
+   edgesForExtendedLayout does not include UIRectEdgeBottom.
+ * On iOS 7, content view does go under advertising view if, for example, everything
+   is left as default (edgesForExtendedLayout == UIRectEdgeAll and
+   extendedLayoutIncludesOpaqueBars == NO) and a bottom translucent view is displayed
+   (e.g. a tab bar).
  
  @param hidden Is banner hidden?
  @param expanded Is banner expanded inline?
@@ -306,8 +319,7 @@
 /**
  Interstitial should be shown?
  
- @return YES if interstital request should start. Default returns YES if no
- interstitial has been presented in current session.
+ @return YES if interstitial request should start. Default returns NO.
  */
 - (BOOL)shouldRequestInterstitialAd;
 

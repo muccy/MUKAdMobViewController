@@ -627,13 +627,39 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     NSLayoutAttribute referencedAttribute;
     
     if (expanded) {
-        referencedItem = self.view;
-        referencedAttribute = NSLayoutAttributeBottom;
+        if (bottomHookedToAdvertisingView) {
+            // Should not overlap with bottom bars
+            if ([self respondsToSelector:@selector(bottomLayoutGuide)]) {
+                referencedItem = [self bottomLayoutGuide];
+                referencedAttribute = NSLayoutAttributeTop;
+            }
+            else {
+                referencedItem = self.view;
+                referencedAttribute = NSLayoutAttributeBottom;
+            }
+        }
+        else {
+            referencedItem = self.view;
+            referencedAttribute = NSLayoutAttributeBottom;
+        }
     }
     else {
         if (bottomHookedToAdvertisingView) {
-            referencedItem = self.advertisingView;
-            referencedAttribute = NSLayoutAttributeTop;
+            if (hidden) {
+                // Advertising view may go under bottom layout guide
+                if ([self respondsToSelector:@selector(bottomLayoutGuide)]) {
+                    referencedItem = [self bottomLayoutGuide];
+                    referencedAttribute = NSLayoutAttributeTop;
+                }
+                else {
+                    referencedItem = self.advertisingView;
+                    referencedAttribute = NSLayoutAttributeTop;
+                }
+            }
+            else {
+                referencedItem = self.advertisingView;
+                referencedAttribute = NSLayoutAttributeTop;
+            }
         }
         else {
             referencedItem = self.view;

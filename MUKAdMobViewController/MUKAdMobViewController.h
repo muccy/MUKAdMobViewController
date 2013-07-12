@@ -257,6 +257,19 @@
 /**
  Creates autolayout constraints to arrange views.
  
+ Content view controller is layed out horing extendedLayoutIncludesOpaqueBars and
+ edgesForExtendedLayout. That means, for example:
+ * On iOS 6, content view never goes under advertising view.
+ * On iOS 7, content view doesn't go under advertising view if
+   extendedLayoutIncludesOpaqueBars is set to NO (default) and no bottom translucent
+   bar is displayed (e.g. tab bar).
+ * On iOS 7, content view doesn't go under advertising view if
+   edgesForExtendedLayout does not include UIRectEdgeBottom.
+ * On iOS 7, content view does go under advertising view if, for example, everything
+   is left as default (edgesForExtendedLayout == UIRectEdgeAll and
+   extendedLayoutIncludesOpaqueBars == NO) and a bottom translucent view is displayed
+   (e.g. a tab bar).
+ 
  @param hidden Is banner hidden?
  @param expanded Is banner expanded inline?
  @param targetSize What size is needed after expansion?

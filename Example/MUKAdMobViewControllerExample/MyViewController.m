@@ -12,6 +12,7 @@
 @interface MyViewController ()
 @property (nonatomic) NSTimer *titleTimer;
 @property (nonatomic) BOOL constraintsAdded;
+@property (nonatomic) NSLayoutConstraint *bottomConstraint;
 @end
 
 @implementation MyViewController
@@ -51,18 +52,45 @@
     if (!self.constraintsAdded) {
         self.constraintsAdded = YES;
         
-        AdViewController *adViewController = (AdViewController *)self.parentViewController;
-        
         [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-[label]-|" options:0 metrics:nil views:@{ @"label" : self.contentsLabel }]];
         [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-[label]" options:0 metrics:nil views:@{ @"label" : self.contentsLabel }]];
-        
-        NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.contentsLabel attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:adViewController.advertisingView attribute:NSLayoutAttributeTop multiplier:1.0f constant:-20.0f];
-        [adViewController.view addConstraint:constraint];
     }
+    
+    AdViewController *adViewController = (AdViewController *)self.parentViewController;
+    
+    if (self.bottomConstraint) {
+        [adViewController.view removeConstraint:self.bottomConstraint];
+    }
+    
+    id referencedItem;
+    if (adViewController.isAdvertisingViewHidden) {
+        if ([adViewController respondsToSelector:@selector(bottomLayoutGuide)]) {
+            referencedItem = [adViewController bottomLayoutGuide];
+        }
+        else {
+            referencedItem = adViewController.advertisingView;
+        }
+    }
+    else {
+        referencedItem = adViewController.advertisingView;
+    }
+    
+    self.bottomConstraint = [NSLayoutConstraint constraintWithItem:self.contentsLabel attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:referencedItem attribute:NSLayoutAttributeTop multiplier:1.0f constant:-20.0f];
+    [adViewController.view addConstraint:self.bottomConstraint];
 }
 
 - (IBAction)pushAnotherPressed:(id)sender {
     MyViewController *contentViewController = [[MyViewController alloc] initWithNibName:nil bundle:nil];
+    
+    if ([contentViewController respondsToSelector:@selector(setExtendedLayoutIncludesOpaqueBars:)])
+    {
+        contentViewController.extendedLayoutIncludesOpaqueBars = self.extendedLayoutIncludesOpaqueBars;
+    }
+    
+    if ([contentViewController respondsToSelector:@selector(setEdgesForExtendedLayout:)])
+    {
+        contentViewController.edgesForExtendedLayout = self.edgesForExtendedLayout;
+    }
     
     AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
     

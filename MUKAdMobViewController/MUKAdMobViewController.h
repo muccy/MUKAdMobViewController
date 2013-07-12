@@ -101,6 +101,11 @@
 @property (nonatomic, readonly, getter = isAdViewExpanded) BOOL adViewExpanded;
 
 /**
+ Is advertising view hidden?
+ */
+@property (nonatomic, readonly, getter = isAdvertisingViewHidden) BOOL advertisingViewHidden;
+
+/**
  Banner view did receive an ad.
  
  This property could be false if banner view has not received an ad yet, or

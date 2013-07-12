@@ -18,6 +18,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 @property (nonatomic, strong, readwrite) UIView *expandedAdView;
 @property (nonatomic, readwrite) NSError *lastLocationManagerError;
 @property (nonatomic, readwrite) BOOL interstitialPresentedInCurrentSession;
+@property (nonatomic, readwrite, getter = isAdvertisingViewHidden) BOOL advertisingViewHidden;
 @end
 
 @implementation MUKAdMobViewController
@@ -126,6 +127,8 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
+    self.advertisingViewHidden = hidden;
+    
     // Apply new constraints
     [self updateLayoutConstraintsForAdvertisingViewHidden:hidden expanded:NO toTargetSize:CGSizeZero];
     

@@ -582,7 +582,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     NSLayoutAttribute referencedAttribute;
     if ([self respondsToSelector:@selector(bottomLayoutGuide)]) {
         referencedItem = [self bottomLayoutGuide];
-        referencedAttribute = NSLayoutAttributeTop;
+        referencedAttribute = hidden ? NSLayoutAttributeBottom : NSLayoutAttributeTop;
     }
     else {
         referencedItem = self.view;

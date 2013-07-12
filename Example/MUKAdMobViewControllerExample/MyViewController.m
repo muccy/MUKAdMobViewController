@@ -7,9 +7,11 @@
 //
 
 #import "MyViewController.h"
+#import "AdViewController.h"
 
 @interface MyViewController ()
 @property (nonatomic) NSTimer *titleTimer;
+@property (nonatomic) BOOL constraintsAdded;
 @end
 
 @implementation MyViewController
@@ -29,10 +31,9 @@
     self.titleTimer = nil;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view from its nib.
+
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -41,6 +42,22 @@
     // Title changes every second
     if (self.titleTimer == nil) {
         self.titleTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(titleTimerFired:) userInfo:nil repeats:YES];
+    }
+}
+
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    
+    if (!self.constraintsAdded) {
+        self.constraintsAdded = YES;
+        
+        AdViewController *adViewController = (AdViewController *)self.parentViewController;
+        
+        [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-[label]-|" options:0 metrics:nil views:@{ @"label" : self.contentsLabel }]];
+        [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-[label]" options:0 metrics:nil views:@{ @"label" : self.contentsLabel }]];
+        
+        NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.contentsLabel attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:adViewController.advertisingView attribute:NSLayoutAttributeTop multiplier:1.0f constant:-20.0f];
+        [adViewController.view addConstraint:constraint];
     }
 }
 

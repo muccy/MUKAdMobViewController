@@ -129,6 +129,14 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
+    // Check if view controller is ready to apply constraints
+    if (self.advertisingView.superview != self.view &&
+        self.contentViewController.view.superview != self.view)
+    {
+        // -viewWillAppear: never called
+        return;
+    }
+    
     self.advertisingViewHidden = hidden;
     
     // Apply new constraints
@@ -230,6 +238,14 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 - (void)setAdvertisingViewExpanded:(BOOL)expanded toSize:(CGSize)targetSize animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
 {
+    // Check if view controller is ready to apply constraints
+    if (self.advertisingView.superview != self.view &&
+        self.contentViewController.view.superview != self.view)
+    {
+        // -viewWillAppear: never called
+        return;
+    }
+    
     // Apply new constraints
     [self updateLayoutConstraintsForAdvertisingViewHidden:NO expanded:expanded toTargetSize:targetSize];
     

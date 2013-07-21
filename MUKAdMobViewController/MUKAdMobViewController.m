@@ -60,40 +60,42 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 #pragma mark - View Events
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-
-    // View controller containment
-    if (self.contentViewController) {
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    // Perform containment if needed
+    // Doing it here makes content view controller to receive willWillAppear
+    // for the first time, with the right timing
+    if (self.contentViewController &&
+        ![[self childViewControllers] containsObject:self.contentViewController])
+    {
         // Also calls -willMoveToParentViewController: automatically.
         [self addChildViewController:self.contentViewController];
         [self.view addSubview:self.contentViewController.view];
         [self.contentViewController didMoveToParentViewController:self];
     }
     
-    // Insert advertising view
-    if (self.advertisingView) {
+    // Insert advertising view if needed
+    if (self.advertisingView &&
+        self.advertisingView.superview != self.view)
+    {
         [self.view addSubview:self.advertisingView];
+        
+        // Hide banner
+        // Also applies autolayout constraints
+        [self setAdvertisingViewHidden:YES animated:NO completion:nil];
     }
-    
-    // Hide banner
-    // Also applies autolayout constraints
-    [self setAdvertisingViewHidden:YES animated:NO completion:nil];
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
     
     // Hide advertising if not appropriate
     if ([self shouldRequestBannerAd] == NO) {
         [self setAdvertisingViewHidden:YES animated:NO completion:^(BOOL finished)
-        {
+         {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-retain-cycles"
-            [self disposeBannerView];
-            [self disposeExpandedAdView];
+             [self disposeBannerView];
+             [self disposeExpandedAdView];
 #pragma clang diagnostic pop
-        }];
+         }];
     }
     
     // Request interstitial if needed

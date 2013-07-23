@@ -60,31 +60,31 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
 #pragma mark - View Events
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
+- (void)viewDidLoad {
+    [super viewDidLoad];
     
-    // Perform containment if needed
-    // Doing it here makes content view controller to receive willWillAppear
-    // for the first time, with the right timing
-    if (self.contentViewController &&
-        ![[self childViewControllers] containsObject:self.contentViewController])
-    {
+    // View controller containment
+    if (self.contentViewController) {
         // Also calls -willMoveToParentViewController: automatically.
         [self addChildViewController:self.contentViewController];
         [self.view addSubview:self.contentViewController.view];
         [self.contentViewController didMoveToParentViewController:self];
     }
     
-    // Insert advertising view if needed
-    if (self.advertisingView &&
-        self.advertisingView.superview != self.view)
-    {
+    // Insert advertising view
+    if (self.advertisingView) {
         [self.view addSubview:self.advertisingView];
-        
-        // Hide banner
-        // Also applies autolayout constraints
-        [self setAdvertisingViewHidden:YES animated:NO completion:nil];
     }
+    
+    // Hide banner
+    // Also applies autolayout constraints
+    [self setAdvertisingViewHidden:YES animated:NO completion:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    [self.contentViewController beginAppearanceTransition:YES animated:animated];
     
     // Hide advertising if not appropriate
     if ([self shouldRequestBannerAd] == NO) {
@@ -111,6 +111,18 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         self.shouldRequestAdvertisingInViewDidAppear = NO;
         [self toggleAdvertisingViewVisibilityAnimated:YES completion:nil];
     }
+    
+    [self.contentViewController endAppearanceTransition];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self.contentViewController beginAppearanceTransition:NO animated:animated];
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    [self.contentViewController endAppearanceTransition];
 }
 
 #pragma mark - Overrides
@@ -125,6 +137,10 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     return self.contentViewController.tabBarController;
 }
 
+- (BOOL)shouldAutomaticallyForwardAppearanceMethods {
+    return NO;
+}
+
 #pragma mark - Banner
 
 - (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler
@@ -133,7 +149,6 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     if (self.advertisingView.superview != self.view &&
         self.contentViewController.view.superview != self.view)
     {
-        // -viewWillAppear: never called
         return;
     }
     
@@ -242,7 +257,6 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     if (self.advertisingView.superview != self.view &&
         self.contentViewController.view.superview != self.view)
     {
-        // -viewWillAppear: never called
         return;
     }
     

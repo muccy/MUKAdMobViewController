@@ -4,12 +4,15 @@ static NSTimeInterval const kAdvertisingAnimationDuration = 0.3;
 static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 
 static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
+static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 @interface MUKAdMobViewController ()
 @property (nonatomic) GADAdSize lastRequestedAdSize;
 @property (nonatomic) BOOL shouldRequestAdvertisingInViewDidAppear;
 @property (nonatomic) NSArray *advertisingAndContentLayoutConstraints;
 @property (nonatomic, strong, readwrite) UIScrollView *expandedAdViewContainer;
+@property (nonatomic) NSTimer *locationManagerTimeoutTimer;
+@property (nonatomic) BOOL lastLocationStoppedForTimeout;
 
 @property (nonatomic, strong, readwrite) GADBannerView *bannerView;
 @property (nonatomic, strong, readwrite) GADInterstitial *interstitial;
@@ -52,6 +55,8 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 - (void)dealloc {
     self.locationManager.delegate = nil;
     self.interstitial.delegate = nil;
+    
+    [self cancelLocationManagerTimeoutTimer];
     
     [self unregisterFromApplicationNotifications];
     [self disposeBannerView];
@@ -341,6 +346,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     
     if ([self shouldStartGeolocation]) {
         [self.locationManager startUpdatingLocation];
+        [self startLocationManagerTimeoutTimer];
     }
     else {
         // No new geolocation is needed
@@ -404,6 +410,19 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         return NO;
     }
     
+    // Last location has a timeout
+    if (self.lastLocationStoppedForTimeout) {
+        return NO;
+    }
+    
+    // Geolocalization is not available
+    if ([CLLocationManager locationServicesEnabled] == NO ||
+        [CLLocationManager authorizationStatus] == kCLAuthorizationStatusRestricted ||
+        [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied)
+    {
+        return NO;
+    }
+    
     // Invalid location with required location configuration
     if (self.requiresValidLocationToRequestNewAd &&
         ![self isValidLocation:self.locationManager.location])
@@ -411,7 +430,6 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         return YES;
     }
     
-    // Every other case, including "Location services disabled"
     return NO;
 }
 
@@ -442,6 +460,7 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 
     if ([self shouldStartGeolocation]) {
         [self.locationManager startUpdatingLocation];
+        [self startLocationManagerTimeoutTimer];
     }
     else {
         // No new geolocation is needed
@@ -489,7 +508,9 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     
     // Stop geolocation
     [self.locationManager stopUpdatingLocation];
+    [self cancelLocationManagerTimeoutTimer];
     self.lastLocationManagerError = nil;
+    self.lastLocationStoppedForTimeout = NO;
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification {
@@ -754,6 +775,29 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
     return bottomHookedToAdvertisingView;
 }
 
+#pragma mark - Private — Location Manager
+
+- (void)startLocationManagerTimeoutTimer {
+    [self cancelLocationManagerTimeoutTimer];
+    
+    self.locationManagerTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kLocationManagerTimeoutInterval target:self selector:@selector(locationManagerTimeoutTimerFired:) userInfo:nil repeats:NO];
+}
+
+- (void)cancelLocationManagerTimeoutTimer {
+    if ([self.locationManagerTimeoutTimer isValid]) {
+        [self.locationManagerTimeoutTimer invalidate];
+        self.locationManagerTimeoutTimer = nil;
+    }
+}
+
+- (void)locationManagerTimeoutTimerFired:(NSTimer *)timer {
+    self.lastLocationManagerError = nil;
+    self.lastLocationStoppedForTimeout = YES;
+    
+    // Request ad if needed
+    [self requestNewBannerAd];
+}
+
 #pragma mark - <GADBannerViewDelegate>
 
 - (void)adViewDidReceiveAd:(GADBannerView *)view {
@@ -808,6 +852,9 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         // Get only one valid location
         [manager stopUpdatingLocation];
         
+        [self cancelLocationManagerTimeoutTimer];
+        self.lastLocationStoppedForTimeout = NO;
+        
         // Request ad if needed
         if (self.isAdViewExpanded) {
             [self setAdvertisingViewExpanded:NO toSize:CGSizeZero animated:YES completion:^ (BOOL finished)
@@ -834,8 +881,10 @@ static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
         // At kCLErrorLocationUnknown it keeps trying
         // Otherwise you should stop
         [manager stopUpdatingLocation];
+        [self cancelLocationManagerTimeoutTimer];
         
         self.lastLocationManagerError = error;
+        self.lastLocationStoppedForTimeout = NO;
         
         // Request ad if needed
         [self requestNewBannerAd];

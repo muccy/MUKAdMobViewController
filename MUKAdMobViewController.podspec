@@ -11,16 +11,7 @@ Pod::Spec.new do |s|
     :git => 'https://github.com/muccy/MUKAdMobViewController.git',
     :tag => s.version.to_s
   }
-
-  # Used by CocoaDocs
-  s.documentation = { :appledoc => [
-    '--no-repeat-first-par',
-    '--no-warn-invalid-crossref',
-    '--project-company "MeLive"',
-    '--company-id "it.melive"'
-    ]
-  }
-
+  
   s.requires_arc    = true
   s.source_files    = 'MUKAdMobViewController/*.{h,m}'
   s.compiler_flags  = '-Wdocumentation'

@@ -12,6 +12,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Google-Mobile-Ads-SDK: edd71358f4ac3c7a09e5614728e19957dd91c017
-  MUKAdMobViewController: c2e116d7261e1b13d9b5456beff62c2a58b2806b
+  MUKAdMobViewController: f1f383b3044997cadbb1a004f255ddd1daeef1fd
 
 COCOAPODS: 0.28.0

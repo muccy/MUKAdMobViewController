@@ -3,6 +3,11 @@
 #import "GADInterstitial.h"
 #import <CoreLocation/CoreLocation.h>
 
+typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
+    MUKAdMobAdvertisingNetworkAdMob = 0,
+    MUKAdMobAdvertisingNetworkDFP
+};
+
 /**
  View controller which manages AdMob interactions.
  
@@ -66,12 +71,27 @@
 @property (nonatomic, strong, readonly) UIViewController *contentViewController;
 
 /**
+ Ad network used by bannerView.
+ Default is MUKAdMobAdvertisingNetworkAdMob.
+ */
+@property (nonatomic) MUKAdMobAdvertisingNetwork bannerAdNetwork;
+
+/**
+ Ad network used by interstitial.
+ Default is MUKAdMobAdvertisingNetworkAdMob.
+ */
+@property (nonatomic) MUKAdMobAdvertisingNetwork interstitialAdNetwork;
+
+/**
  AdMob banner view.
+ If bannerAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPBannerView is alloc'd.
  */
 @property (nonatomic, strong, readonly) GADBannerView *bannerView;
 
 /**
  AdMob interstitial.
+ If interstitialAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPInterstitial is 
+ alloc'd.
  */
 @property (nonatomic, strong, readonly) GADInterstitial *interstitial;
 

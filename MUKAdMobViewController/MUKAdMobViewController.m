@@ -838,12 +838,6 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     self.interstitialPresentedInCurrentSession = YES;
 }
 
-- (void)interstitial:(GADInterstitial *)ad didFailToReceiveAdWithError:(GADRequestError *)error
-{
-    self.interstitial.delegate = nil;
-    self.interstitial = nil;
-}
-
 #pragma mark - <CLLocationManagerDelegate>
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations

@@ -1,4 +1,6 @@
 #import "MUKAdMobViewController.h"
+#import "DFPBannerView.h"
+#import "DFPInterstitial.h"
 
 static NSTimeInterval const kAdvertisingAnimationDuration = 0.3;
 static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
@@ -231,7 +233,16 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 }
 
 - (GADBannerView *)newBannerView {
-    GADBannerView *bannerView = [[GADBannerView alloc] initWithAdSize:kGADAdSizeBanner];
+    Class bannerViewClass;
+    
+    if (self.bannerAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        bannerViewClass = [DFPBannerView class];
+    }
+    else {
+        bannerViewClass = [GADBannerView class];
+    }
+    
+    GADBannerView *bannerView = [[bannerViewClass alloc] initWithAdSize:kGADAdSizeBanner];
     self.lastRequestedAdSize = bannerView.adSize;
     
     bannerView.delegate = self;
@@ -470,7 +481,16 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 }
 
 - (GADInterstitial *)newInterstitial {
-    GADInterstitial *interstitial = [[GADInterstitial alloc] init];
+    Class interstitialClass;
+    
+    if (self.interstitialAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        interstitialClass = [DFPInterstitial class];
+    }
+    else {
+        interstitialClass = [GADInterstitial class];
+    }
+    
+    GADInterstitial *interstitial = [[interstitialClass alloc] init];
     interstitial.adUnitID = self.interstitialAdUnitID;
     interstitial.delegate = self;
     return interstitial;

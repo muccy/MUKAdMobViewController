@@ -406,7 +406,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 - (BOOL)shouldStartGeolocation {
     // Last error can not be resolved
-    if ([self shouldStopGeolocationOnError:self.lastLocationManagerError]) {
+    if ([self shouldStopGeolocationForError:self.lastLocationManagerError]) {
         return NO;
     }
     
@@ -433,7 +433,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     return NO;
 }
 
-- (BOOL)shouldStopGeolocationOnError:(NSError *)error {
+- (BOOL)shouldStopGeolocationForError:(NSError *)error {
     if ([error.domain isEqualToString:kCLErrorDomain] == NO) {
         return NO;
     }
@@ -871,7 +871,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    if ([self shouldStopGeolocationOnError:error]) {
+    if ([self shouldStopGeolocationForError:error]) {
         // At kCLErrorLocationUnknown it keeps trying
         // Otherwise you should stop
         [manager stopUpdatingLocation];

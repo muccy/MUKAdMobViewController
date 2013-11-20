@@ -316,7 +316,7 @@
  @return YES if error can not be recovered. Default returns YES when error code
  is not kCLErrorLocationUnknown.
  */
-- (BOOL)shouldStopGeolocationOnError:(NSError *)error;
+- (BOOL)shouldStopGeolocationForError:(NSError *)error;
 @end
 
 

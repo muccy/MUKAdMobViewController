@@ -22,7 +22,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 @property (nonatomic, readwrite, getter = isAdViewExpanded) BOOL adViewExpanded;
 @property (nonatomic, strong, readwrite) UIView *expandedAdView;
 @property (nonatomic, readwrite) NSError *lastLocationManagerError;
-@property (nonatomic, readwrite) BOOL interstitialPresentedInCurrentSession;
+@property (nonatomic, readwrite) BOOL interstitialAdReceivedDuringCurrentSession;
 @property (nonatomic, readwrite, getter = isAdvertisingViewHidden) BOOL advertisingViewHidden;
 @end
 
@@ -507,6 +507,10 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     return request;
 }
 
+- (BOOL)shouldPresentReceivedInterstitialAd:(GADInterstitial *)ad {
+    return YES;
+}
+
 #pragma mark - Application Notifications
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
@@ -522,7 +526,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     
     [self disposeExpandedAdView];
     
-    self.interstitialPresentedInCurrentSession = NO;
+    self.interstitialAdReceivedDuringCurrentSession = NO;
     self.interstitial.delegate = nil;
     self.interstitial = nil;
     
@@ -854,8 +858,11 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 #pragma mark - <GADInterstitialDelegate>
 
 - (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
-    [ad presentFromRootViewController:self];
-    self.interstitialPresentedInCurrentSession = YES;
+    self.interstitialAdReceivedDuringCurrentSession = YES;
+    
+    if ([self shouldPresentReceivedInterstitialAd:ad]) {
+        [ad presentFromRootViewController:self];
+    }
 }
 
 #pragma mark - <CLLocationManagerDelegate>

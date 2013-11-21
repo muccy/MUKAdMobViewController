@@ -134,11 +134,11 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
 @property (nonatomic, readonly) BOOL bannerAdReceived;
 
 /**
- Interstitial has been presented in this session.
+ Interstitial has been received in this session.
  
- This property will be set to false when app goes background.
+ This property will be set to NO when app goes background.
  */
-@property (nonatomic, readonly) BOOL interstitialPresentedInCurrentSession;
+@property (nonatomic, readonly) BOOL interstitialAdReceivedDuringCurrentSession;
 
 /**
  Location manager used to retrieve a coordinate for ad request.
@@ -366,6 +366,16 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @return New ad request.
  */
 - (GADRequest *)newInterstitialRequest;
+
+/**
+ An interstitial ad has been received and you could choose to display it.
+ Using this method you have the chance to save received ad and to postpone its
+ presentation.
+ 
+ @param ad The received interstitial ad.
+ @return YES if you want to present interstitial ad. Default is YES.
+ */
+- (BOOL)shouldPresentReceivedInterstitialAd:(GADInterstitial *)ad;
 @end
 
 

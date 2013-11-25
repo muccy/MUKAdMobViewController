@@ -3,6 +3,11 @@
 #import "GADInterstitial.h"
 #import <CoreLocation/CoreLocation.h>
 
+typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
+    MUKAdMobAdvertisingNetworkAdMob = 0,
+    MUKAdMobAdvertisingNetworkDFP
+};
+
 /**
  View controller which manages AdMob interactions.
  
@@ -66,12 +71,27 @@
 @property (nonatomic, strong, readonly) UIViewController *contentViewController;
 
 /**
+ Ad network used by bannerView.
+ Default is MUKAdMobAdvertisingNetworkAdMob.
+ */
+@property (nonatomic) MUKAdMobAdvertisingNetwork bannerAdNetwork;
+
+/**
+ Ad network used by interstitial.
+ Default is MUKAdMobAdvertisingNetworkAdMob.
+ */
+@property (nonatomic) MUKAdMobAdvertisingNetwork interstitialAdNetwork;
+
+/**
  AdMob banner view.
+ If bannerAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPBannerView is alloc'd.
  */
 @property (nonatomic, strong, readonly) GADBannerView *bannerView;
 
 /**
  AdMob interstitial.
+ If interstitialAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPInterstitial is 
+ alloc'd.
  */
 @property (nonatomic, strong, readonly) GADInterstitial *interstitial;
 
@@ -114,11 +134,11 @@
 @property (nonatomic, readonly) BOOL bannerAdReceived;
 
 /**
- Interstitial has been presented in this session.
+ Interstitial has been received in this session.
  
- This property will be set to false when app goes background.
+ This property will be set to NO when app goes background.
  */
-@property (nonatomic, readonly) BOOL interstitialPresentedInCurrentSession;
+@property (nonatomic, readonly) BOOL interstitialAdReceivedDuringCurrentSession;
 
 /**
  Location manager used to retrieve a coordinate for ad request.
@@ -180,6 +200,7 @@
  
  @return `GADBannerView` instance with `kGADAdSizeBanner` ad size. What is more,
  this method set banner view delegate to `self` and it setups other view defaults.
+ It returns nil if requested ad size is `kGADAdSizeInvalid`.
  */
 - (GADBannerView *)newBannerView;
 
@@ -187,6 +208,21 @@
  Removes bannerView.
  */
 - (void)disposeBannerView;
+
+/**
+ The ad size for an orientation.
+ This method is called with bannerView is instantiated and inside
+ -viewWillLayoutSubviews to react to interface rotations. When ad size changes,
+ this class hides banner view and it updates bannerView.adSize properly. This
+ will make AdMob to request new ad for updated size.
+ If you always return the same ad size, nothing happens on autorotations.
+ If you return `kGADAdSizeInvalid`, banner view will be hidden and disposed.
+ 
+ @param orientation The given orientation to use to calculate banner ad size.
+ @return Banner size. Default returns `kGADAdSizeSmartBannerLandscape` when
+ orientation is landscape, or `kGADAdSizeSmartBannerPortrait` for other cases.
+ */
+- (GADAdSize)bannerAdSizeForOrientation:(UIInterfaceOrientation)orientation;
 @end
 
 
@@ -316,7 +352,7 @@
  @return YES if error can not be recovered. Default returns YES when error code
  is not kCLErrorLocationUnknown.
  */
-- (BOOL)shouldStopGeolocationOnError:(NSError *)error;
+- (BOOL)shouldStopGeolocationForError:(NSError *)error;
 @end
 
 
@@ -346,6 +382,16 @@
  @return New ad request.
  */
 - (GADRequest *)newInterstitialRequest;
+
+/**
+ An interstitial ad has been received and you could choose to display it.
+ Using this method you have the chance to save received ad and to postpone its
+ presentation.
+ 
+ @param ad The received interstitial ad.
+ @return YES if you want to present interstitial ad. Default is YES.
+ */
+- (BOOL)shouldPresentReceivedInterstitialAd:(GADInterstitial *)ad;
 @end
 
 

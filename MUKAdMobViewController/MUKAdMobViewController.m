@@ -1,4 +1,6 @@
 #import "MUKAdMobViewController.h"
+#import "DFPBannerView.h"
+#import "DFPInterstitial.h"
 
 static NSTimeInterval const kAdvertisingAnimationDuration = 0.3;
 static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
@@ -12,7 +14,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 @property (nonatomic) NSArray *advertisingAndContentLayoutConstraints;
 @property (nonatomic, strong, readwrite) UIScrollView *expandedAdViewContainer;
 @property (nonatomic) NSTimer *locationManagerTimeoutTimer;
-@property (nonatomic) BOOL lastLocationStoppedForTimeout;
+@property (nonatomic) BOOL lastLocationStoppedForTimeout, changingBannerViewAdSize, bannerAdRequested;
 
 @property (nonatomic, strong, readwrite) GADBannerView *bannerView;
 @property (nonatomic, strong, readwrite) GADInterstitial *interstitial;
@@ -20,7 +22,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 @property (nonatomic, readwrite, getter = isAdViewExpanded) BOOL adViewExpanded;
 @property (nonatomic, strong, readwrite) UIView *expandedAdView;
 @property (nonatomic, readwrite) NSError *lastLocationManagerError;
-@property (nonatomic, readwrite) BOOL interstitialPresentedInCurrentSession;
+@property (nonatomic, readwrite) BOOL interstitialAdReceivedDuringCurrentSession;
 @property (nonatomic, readwrite, getter = isAdvertisingViewHidden) BOOL advertisingViewHidden;
 @end
 
@@ -130,6 +132,48 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     [self.contentViewController endAppearanceTransition];
 }
 
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    
+    // Orientation is changing
+    // If banner is not expanded, request new ad size if needed
+    if (self.bannerAdRequested && !self.isAdViewExpanded && !self.changingBannerViewAdSize)
+    {
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        GADAdSize adSize = [self bannerAdSizeForOrientation:orientation];
+        
+        // Size has changed
+        if (!GADAdSizeEqualToSize(adSize, self.lastRequestedAdSize)) {
+            // Hide banner view
+            __weak MUKAdMobViewController *weakSelf = self;
+            self.changingBannerViewAdSize = YES;
+            [self setAdvertisingViewHidden:YES animated:YES completion:^(BOOL finished)
+            {
+                MUKAdMobViewController *strongSelf = weakSelf;
+                
+                // If side is invalid, dispose banner view.
+                // Otherwise update ad size
+                if (GADAdSizeEqualToSize(adSize, kGADAdSizeInvalid)) {
+                    [strongSelf disposeBannerView];
+                }
+                else {
+                    // If banner is already alloc'd just update.
+                    // Otherwise make a brand new allocation and request.
+                    if (strongSelf.bannerView) {
+                        strongSelf.bannerView.adSize = adSize;
+                    }
+                    else {
+                        [strongSelf requestNewBannerAd];
+                    }
+                }
+               
+                strongSelf.lastRequestedAdSize = adSize;
+                strongSelf.changingBannerViewAdSize = NO;
+            }]; // setAdvertisingViewHidden
+        } // if size has changed
+    } // if banner is not expanded
+}
+
 #pragma mark - Overrides
 
 // Useful wehn embedding in UINavigationController
@@ -231,8 +275,22 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 }
 
 - (GADBannerView *)newBannerView {
-    GADBannerView *bannerView = [[GADBannerView alloc] initWithAdSize:kGADAdSizeBanner];
-    self.lastRequestedAdSize = bannerView.adSize;
+    GADAdSize adSize = [self bannerAdSizeForOrientation:self.interfaceOrientation];
+    if (GADAdSizeEqualToSize(adSize, kGADAdSizeInvalid)) {
+        return nil;
+    }
+    
+    Class bannerViewClass;
+    
+    if (self.bannerAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        bannerViewClass = [DFPBannerView class];
+    }
+    else {
+        bannerViewClass = [GADBannerView class];
+    }
+    
+    GADBannerView *bannerView = [[bannerViewClass alloc] initWithAdSize:adSize];
+    self.lastRequestedAdSize = adSize;
     
     bannerView.delegate = self;
     bannerView.backgroundColor = [UIColor clearColor];
@@ -252,6 +310,14 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     if (self.isAdViewExpanded == NO) {
         self.shouldRequestAdvertisingInViewDidAppear = YES;
     }
+}
+
+- (GADAdSize)bannerAdSizeForOrientation:(UIInterfaceOrientation)orientation {
+    if (UIInterfaceOrientationIsLandscape(orientation)) {
+        return kGADAdSizeSmartBannerLandscape;
+    }
+    
+    return kGADAdSizeSmartBannerPortrait;
 }
 
 #pragma mark - Inline Banner Expansion
@@ -340,8 +406,12 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     // Invalidate postponed requests
     self.shouldRequestAdvertisingInViewDidAppear = NO;
     
-    if (self.bannerView == nil) {
+    if (!self.bannerView) {
         self.bannerView = [self newBannerView];
+        
+        if (!self.bannerView) {
+            return;
+        }
     }
     
     if ([self shouldStartGeolocation]) {
@@ -350,6 +420,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     }
     else {
         // No new geolocation is needed
+        self.bannerAdRequested = YES;
         GADRequest *request = [self newBannerAdRequest];
         [self.bannerView loadRequest:request];
     }
@@ -406,7 +477,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 - (BOOL)shouldStartGeolocation {
     // Last error can not be resolved
-    if ([self shouldStopGeolocationOnError:self.lastLocationManagerError]) {
+    if ([self shouldStopGeolocationForError:self.lastLocationManagerError]) {
         return NO;
     }
     
@@ -433,7 +504,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     return NO;
 }
 
-- (BOOL)shouldStopGeolocationOnError:(NSError *)error {
+- (BOOL)shouldStopGeolocationForError:(NSError *)error {
     if ([error.domain isEqualToString:kCLErrorDomain] == NO) {
         return NO;
     }
@@ -470,7 +541,16 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 }
 
 - (GADInterstitial *)newInterstitial {
-    GADInterstitial *interstitial = [[GADInterstitial alloc] init];
+    Class interstitialClass;
+    
+    if (self.interstitialAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        interstitialClass = [DFPInterstitial class];
+    }
+    else {
+        interstitialClass = [GADInterstitial class];
+    }
+    
+    GADInterstitial *interstitial = [[interstitialClass alloc] init];
     interstitial.adUnitID = self.interstitialAdUnitID;
     interstitial.delegate = self;
     return interstitial;
@@ -485,6 +565,10 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     }
     
     return request;
+}
+
+- (BOOL)shouldPresentReceivedInterstitialAd:(GADInterstitial *)ad {
+    return YES;
 }
 
 #pragma mark - Application Notifications
@@ -502,7 +586,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     
     [self disposeExpandedAdView];
     
-    self.interstitialPresentedInCurrentSession = NO;
+    self.interstitialAdReceivedDuringCurrentSession = NO;
     self.interstitial.delegate = nil;
     self.interstitial = nil;
     
@@ -834,14 +918,11 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 #pragma mark - <GADInterstitialDelegate>
 
 - (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
-    [ad presentFromRootViewController:self];
-    self.interstitialPresentedInCurrentSession = YES;
-}
-
-- (void)interstitial:(GADInterstitial *)ad didFailToReceiveAdWithError:(GADRequestError *)error
-{
-    self.interstitial.delegate = nil;
-    self.interstitial = nil;
+    self.interstitialAdReceivedDuringCurrentSession = YES;
+    
+    if ([self shouldPresentReceivedInterstitialAd:ad]) {
+        [ad presentFromRootViewController:self];
+    }
 }
 
 #pragma mark - <CLLocationManagerDelegate>
@@ -877,7 +958,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    if ([self shouldStopGeolocationOnError:error]) {
+    if ([self shouldStopGeolocationForError:error]) {
         // At kCLErrorLocationUnknown it keeps trying
         // Otherwise you should stop
         [manager stopUpdatingLocation];

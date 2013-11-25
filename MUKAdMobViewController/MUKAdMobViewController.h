@@ -200,6 +200,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  
  @return `GADBannerView` instance with `kGADAdSizeBanner` ad size. What is more,
  this method set banner view delegate to `self` and it setups other view defaults.
+ It returns nil if requested ad size is `kGADAdSizeInvalid`.
  */
 - (GADBannerView *)newBannerView;
 
@@ -207,6 +208,21 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  Removes bannerView.
  */
 - (void)disposeBannerView;
+
+/**
+ The ad size for an orientation.
+ This method is called with bannerView is instantiated and inside
+ -viewWillLayoutSubviews to react to interface rotations. When ad size changes,
+ this class hides banner view and it updates bannerView.adSize properly. This
+ will make AdMob to request new ad for updated size.
+ If you always return the same ad size, nothing happens on autorotations.
+ If you return `kGADAdSizeInvalid`, banner view will be hidden and disposed.
+ 
+ @param orientation The given orientation to use to calculate banner ad size.
+ @return Banner size. Default returns `kGADAdSizeSmartBannerLandscape` when
+ orientation is landscape, or `kGADAdSizeSmartBannerPortrait` for other cases.
+ */
+- (GADAdSize)bannerAdSizeForOrientation:(UIInterfaceOrientation)orientation;
 @end
 
 

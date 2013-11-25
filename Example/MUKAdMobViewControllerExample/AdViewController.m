@@ -16,13 +16,13 @@
 
 - (GADRequest *)newInterstitialRequest {
     GADRequest *request = [super newInterstitialRequest];
-    request.testDevices = @[ @"GAD_SIMULATOR_ID" ];
+    request.testDevices = @[ GAD_SIMULATOR_ID ];
     return request;
 }
 
 - (GADRequest *)newBannerAdRequest {
     GADRequest *request = [super newBannerAdRequest];
-    request.testDevices = @[ @"GAD_SIMULATOR_ID" ];
+    request.testDevices = @[ GAD_SIMULATOR_ID ];
     return request;
 }
 

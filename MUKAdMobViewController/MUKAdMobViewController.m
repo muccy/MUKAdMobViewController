@@ -737,7 +737,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
         NSLayoutConstraint *superviewConstraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f];
         [constraints addObject:superviewConstraint];
         
-        if (targetSize.height > 0.0f + FLT_EPSILON) {
+        if (targetSize.height > 0.0f) {
             NSLayoutConstraint *constraint = [NSLayoutConstraint constraintWithItem:self.advertisingView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:targetSize.height];
             constraint.priority = superviewConstraint.priority - 1;
             [constraints addObject:constraint];

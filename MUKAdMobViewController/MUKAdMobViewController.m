@@ -190,6 +190,14 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     return NO;
 }
 
+- (UIViewController *)childViewControllerForStatusBarHidden {
+    return self.contentViewController;
+}
+
+- (UIViewController *)childViewControllerForStatusBarStyle {
+    return self.contentViewController;
+}
+
 #pragma mark - Banner
 
 - (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler

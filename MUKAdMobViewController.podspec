@@ -17,5 +17,5 @@ Pod::Spec.new do |s|
   s.compiler_flags  = '-Wdocumentation'
   s.frameworks      = 'CoreLocation'
   
-  s.dependency 'Google-Mobile-Ads-SDK', '~> 6.6.1'
+  s.dependency 'Google-Mobile-Ads-SDK', '~> 6.6'
 end

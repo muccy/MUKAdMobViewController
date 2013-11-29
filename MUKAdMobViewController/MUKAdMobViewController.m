@@ -8,6 +8,12 @@ static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 static NSTimeInterval const kMaxLocationTimestampInterval = 3600.0; // 1 hour
 static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
+typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
+    MUKAdMobViewControllerGeolocationIntentNone         = 0,
+    MUKAdMobViewControllerGeolocationIntentBanner       = 1 << 0,
+    MUKAdMobViewControllerGeolocationIntentInterstitial = 1 << 1
+};
+
 @interface MUKAdMobViewController ()
 @property (nonatomic) GADAdSize lastRequestedAdSize;
 @property (nonatomic) BOOL shouldRequestAdvertisingInViewDidAppear;
@@ -15,6 +21,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 @property (nonatomic, strong, readwrite) UIScrollView *expandedAdViewContainer;
 @property (nonatomic) NSTimer *locationManagerTimeoutTimer;
 @property (nonatomic) BOOL lastLocationStoppedForTimeout, changingBannerViewAdSize, bannerAdRequested;
+@property (nonatomic) MUKAdMobViewControllerGeolocationIntent geolocationIntent;
 
 @property (nonatomic, strong, readwrite) GADBannerView *bannerView;
 @property (nonatomic, strong, readwrite) GADInterstitial *interstitial;
@@ -423,8 +430,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     }
     
     if ([self shouldStartGeolocation]) {
-        [self.locationManager startUpdatingLocation];
-        [self startLocationManagerTimeoutTimer];
+        [self startLocationManagerWithIntent:MUKAdMobViewControllerGeolocationIntentBanner withTimeoutTimer:YES];
     }
     else {
         // No new geolocation is needed
@@ -538,8 +544,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     self.interstitial = [self newInterstitial];
 
     if ([self shouldStartGeolocation]) {
-        [self.locationManager startUpdatingLocation];
-        [self startLocationManagerTimeoutTimer];
+        [self startLocationManagerWithIntent:MUKAdMobViewControllerGeolocationIntentInterstitial withTimeoutTimer:YES];
     }
     else {
         // No new geolocation is needed
@@ -599,10 +604,7 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     self.interstitial = nil;
     
     // Stop geolocation
-    [self.locationManager stopUpdatingLocation];
-    [self cancelLocationManagerTimeoutTimer];
-    self.lastLocationManagerError = nil;
-    self.lastLocationStoppedForTimeout = NO;
+    [self stopLocationManager];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification *)notification {
@@ -869,6 +871,34 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
 
 #pragma mark - Private — Location Manager
 
+- (void)startLocationManagerWithIntent:(MUKAdMobViewControllerGeolocationIntent)intent withTimeoutTimer:(BOOL)useTimeoutTimer
+{
+    self.geolocationIntent |= intent;
+    [self.locationManager startUpdatingLocation];
+    
+    if (useTimeoutTimer) {
+        [self startLocationManagerTimeoutTimer];
+    }
+}
+
+- (void)stopLocationManager {
+    self.geolocationIntent = MUKAdMobViewControllerGeolocationIntentNone;
+    [self.locationManager stopUpdatingLocation];
+    [self cancelLocationManagerTimeoutTimer];
+    self.lastLocationManagerError = nil;
+    self.lastLocationStoppedForTimeout = NO;
+}
+
+- (BOOL)locationManagerHasIntent:(MUKAdMobViewControllerGeolocationIntent)intent
+{
+    return (self.geolocationIntent & intent) == intent;
+}
+
+- (void)removeLocationManagerIntent:(MUKAdMobViewControllerGeolocationIntent)intent
+{
+    self.geolocationIntent &= ~intent;
+}
+
 - (void)startLocationManagerTimeoutTimer {
     [self cancelLocationManagerTimeoutTimer];
     
@@ -887,7 +917,28 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
     self.lastLocationStoppedForTimeout = YES;
     
     // Request ad if needed
-    [self requestNewBannerAd];
+    [self requestNewBannerAdCheckingLocationManagerIntent];
+    [self requestNewInterstitialAdCheckingLocationManagerIntent];
+}
+
+#pragma mark - Private — Banner Request
+
+- (void)requestNewBannerAdCheckingLocationManagerIntent {
+    if ([self locationManagerHasIntent:MUKAdMobViewControllerGeolocationIntentBanner])
+    {
+        [self removeLocationManagerIntent:MUKAdMobViewControllerGeolocationIntentBanner];
+        [self requestNewBannerAd];
+    }
+}
+
+#pragma mark - Private — Interstitial Ad
+
+- (void)requestNewInterstitialAdCheckingLocationManagerIntent {
+    if ([self locationManagerHasIntent:MUKAdMobViewControllerGeolocationIntentInterstitial])
+    {
+        [self removeLocationManagerIntent:MUKAdMobViewControllerGeolocationIntentInterstitial];
+        [self requestNewInterstitialAd];
+    }
 }
 
 #pragma mark - <GADBannerViewDelegate>
@@ -954,13 +1005,15 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
                 [self disposeExpandedAdView];
 
                 // Request new ad
-                [self requestNewBannerAd];
+                [self requestNewBannerAdCheckingLocationManagerIntent];
 #pragma clang diagnostic pop
-            }];
+            }]; // setAdvertisingViewExpanded:toSize:animated:completion:
         }
         else {
-            [self requestNewBannerAd];
-        }
+            [self requestNewBannerAdCheckingLocationManagerIntent];
+        } // if/else isAdViewExpanded
+        
+        [self requestNewInterstitialAdCheckingLocationManagerIntent];
     }
 }
 
@@ -976,7 +1029,8 @@ static NSTimeInterval const kLocationManagerTimeoutInterval = 15.0;
         self.lastLocationStoppedForTimeout = NO;
         
         // Request ad if needed
-        [self requestNewBannerAd];
+        [self requestNewBannerAdCheckingLocationManagerIntent];
+        [self requestNewInterstitialAdCheckingLocationManagerIntent];
     }
 }
 

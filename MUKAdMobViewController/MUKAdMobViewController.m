@@ -197,6 +197,14 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     return NO;
 }
 
+- (UIViewController *)childViewControllerForStatusBarHidden {
+    return self.contentViewController;
+}
+
+- (UIViewController *)childViewControllerForStatusBarStyle {
+    return self.contentViewController;
+}
+
 #pragma mark - Banner
 
 - (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler

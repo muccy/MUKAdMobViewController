@@ -9,6 +9,9 @@
 #import "AppDelegate.h"
 #import "MyViewController.h"
 
+#define DEBUG_OPAQUE_TAB_BAR    1
+#define DEBUG_OPAQUE_NAV_BAR    1
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -17,6 +20,7 @@
     
     UITabBarController *tabBarController = [[UITabBarController alloc] init];
     tabBarController.viewControllers = @[ [self newNavigationControllerWithAdvertisingViewControllerTitled:@"1"], [self newNavigationControllerWithAdvertisingViewControllerTitled:@"2"], [self newNavigationControllerWithAdvertisingViewControllerTitled:@"3"] ];
+    tabBarController.tabBar.translucent = !DEBUG_OPAQUE_TAB_BAR;
     
     self.window.rootViewController = tabBarController;
     
@@ -37,6 +41,7 @@
     adViewController.interstitialAdUnitID = @"a14fc76ac9f3142";
     
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:adViewController];
+    navController.navigationBar.translucent = !DEBUG_OPAQUE_NAV_BAR;
     navController.tabBarItem = [[UITabBarItem alloc] initWithTitle:title image:nil tag:-1];
     
     return navController;

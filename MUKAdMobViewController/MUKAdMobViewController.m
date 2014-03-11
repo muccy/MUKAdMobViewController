@@ -183,7 +183,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 
 #pragma mark - Overrides
 
-// Useful wehn embedding in UINavigationController
+// Useful when embedding in UINavigationController
 - (UINavigationItem *)navigationItem {
     return self.contentViewController.navigationItem;
 }
@@ -191,6 +191,11 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 // Useful when embedding in UITabBarController
 - (UITabBarController *)tabBarController {
     return self.contentViewController.tabBarController;
+}
+
+// Useful when embedding in UITabBarController
+- (UITabBarItem *)tabBarItem {
+    return self.contentViewController.tabBarItem;
 }
 
 - (BOOL)shouldAutomaticallyForwardAppearanceMethods {

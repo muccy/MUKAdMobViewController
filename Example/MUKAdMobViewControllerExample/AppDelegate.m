@@ -9,8 +9,9 @@
 #import "AppDelegate.h"
 #import "MyViewController.h"
 
-#define DEBUG_OPAQUE_TAB_BAR    1
-#define DEBUG_OPAQUE_NAV_BAR    1
+#define USES_OPAQUE_TAB_BAR    1
+#define USES_OPAQUE_NAV_BAR    1
+#define USES_NAV_CONTROLLER_IN_ADV_CONTROLLER   1
 
 @implementation AppDelegate
 
@@ -19,8 +20,8 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
     UITabBarController *tabBarController = [[UITabBarController alloc] init];
-    tabBarController.viewControllers = @[ [self newNavigationControllerWithAdvertisingViewControllerTitled:@"1"], [self newNavigationControllerWithAdvertisingViewControllerTitled:@"2"], [self newNavigationControllerWithAdvertisingViewControllerTitled:@"3"] ];
-    tabBarController.tabBar.translucent = !DEBUG_OPAQUE_TAB_BAR;
+    tabBarController.viewControllers = @[ [self newViewControllerWithAdvertisingViewControllerTitled:@"1"], [self newViewControllerWithAdvertisingViewControllerTitled:@"2"], [self newViewControllerWithAdvertisingViewControllerTitled:@"3"] ];
+    tabBarController.tabBar.translucent = !USES_OPAQUE_TAB_BAR;
     
     self.window.rootViewController = tabBarController;
     
@@ -29,22 +30,32 @@
     return YES;
 }
 
-#pragma mark - Private 
+#pragma mark - Private
 
-- (UINavigationController *)newNavigationControllerWithAdvertisingViewControllerTitled:(NSString *)title
+- (UIViewController *)newViewControllerWithAdvertisingViewControllerTitled:(NSString *)title
 {
+    UIViewController *viewController;
     MyViewController *contentViewController = [[MyViewController alloc] initWithNibName:nil bundle:nil];
     contentViewController.title = title;
     
-    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
-    adViewController.bannerAdUnitID = @"a14fc76ac9f3142";
-    adViewController.interstitialAdUnitID = @"a14fc76ac9f3142";
+#if USES_NAV_CONTROLLER_IN_ADV_CONTROLLER
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:contentViewController];
+    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:navController];
+    viewController = adViewController;
     
+#else
+    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:adViewController];
-    navController.navigationBar.translucent = !DEBUG_OPAQUE_NAV_BAR;
+    viewController = navController;
+#endif
+    
+    navController.navigationBar.translucent = !USES_OPAQUE_NAV_BAR;
     navController.tabBarItem = [[UITabBarItem alloc] initWithTitle:title image:nil tag:-1];
     
-    return navController;
+    adViewController.bannerAdUnitID = @"a14fc76ac9f3142";
+    adViewController.interstitialAdUnitID = @"a14fc76ac9f3142";
+
+    return viewController;
 }
 
 @end

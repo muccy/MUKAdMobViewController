@@ -9,8 +9,9 @@
 #import "AppDelegate.h"
 #import "MyViewController.h"
 
-#define USES_OPAQUE_TAB_BAR    1
-#define USES_OPAQUE_NAV_BAR    1
+#define USES_OPAQUE_TAB_BAR                     1
+#define USES_OPAQUE_NAV_BAR                     1
+#define USES_NAV_CONTROLLER                     1
 #define USES_NAV_CONTROLLER_IN_ADV_CONTROLLER   1
 
 @implementation AppDelegate
@@ -39,14 +40,14 @@
     contentViewController.title = title;
     
 #if USES_NAV_CONTROLLER_IN_ADV_CONTROLLER
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:contentViewController];
-    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:navController];
+    UINavigationController *navController = USES_NAV_CONTROLLER ? [[UINavigationController alloc] initWithRootViewController:contentViewController] : nil;
+    AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:navController ?: contentViewController];
     viewController = adViewController;
     
 #else
     AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:adViewController];
-    viewController = navController;
+    UINavigationController *navController = USES_NAV_CONTROLLER ? [[UINavigationController alloc] initWithRootViewController:adViewController] : nil;
+    viewController = navController ?: adViewController;
 #endif
     
     navController.navigationBar.translucent = !USES_OPAQUE_NAV_BAR;

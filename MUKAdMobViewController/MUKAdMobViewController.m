@@ -15,6 +15,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 };
 
 @interface MUKAdMobViewController ()
+@property (nonatomic, weak) UIView *contentWrapperView;
 @property (nonatomic) GADAdSize lastRequestedAdSize;
 @property (nonatomic) BOOL shouldRequestAdvertisingInViewDidAppear;
 @property (nonatomic) NSArray *advertisingAndContentLayoutConstraints;
@@ -40,7 +41,6 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     self = [super init];
     if (self) {
         _contentViewController = contentViewController;
-        contentViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
         
         // Dummy advertising view will be resized by constraints
         _advertisingView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.f, 50.0f)];
@@ -81,7 +81,22 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     if (self.contentViewController) {
         // Also calls -willMoveToParentViewController: automatically.
         [self addChildViewController:self.contentViewController];
-        [self.view addSubview:self.contentViewController.view];
+        
+        // Constraints will be set
+        UIView *wrapperView = [[UIView alloc] initWithFrame:self.view.bounds];
+        wrapperView.translatesAutoresizingMaskIntoConstraints = NO;
+        wrapperView.backgroundColor = [UIColor clearColor];
+        
+        // Insert content controller's view
+        self.contentViewController.view.frame = wrapperView.bounds;
+        self.contentViewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+        [wrapperView addSubview:self.contentViewController.view];
+        
+        // Insert wrapper
+        [self.view addSubview:wrapperView];
+        self.contentWrapperView = wrapperView;
+        
+        // Complete containment
         [self.contentViewController didMoveToParentViewController:self];
     }
     
@@ -183,7 +198,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 
 #pragma mark - Overrides
 
-// Useful wehn embedding in UINavigationController
+// Useful when embedding in UINavigationController
 - (UINavigationItem *)navigationItem {
     return self.contentViewController.navigationItem;
 }
@@ -191,6 +206,11 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 // Useful when embedding in UITabBarController
 - (UITabBarController *)tabBarController {
     return self.contentViewController.tabBarController;
+}
+
+// Useful when embedding in UITabBarController
+- (UITabBarItem *)tabBarItem {
+    return self.contentViewController.tabBarItem;
 }
 
 - (BOOL)shouldAutomaticallyForwardAppearanceMethods {
@@ -211,7 +231,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 {
     // Check if view controller is ready to apply constraints
     if (self.advertisingView.superview != self.view &&
-        self.contentViewController.view.superview != self.view)
+        self.contentWrapperView.superview != self.view)
     {
         return;
     }
@@ -341,7 +361,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 {
     // Check if view controller is ready to apply constraints
     if (self.advertisingView.superview != self.view &&
-        self.contentViewController.view.superview != self.view)
+        self.contentWrapperView.superview != self.view)
     {
         return;
     }
@@ -584,6 +604,10 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     return YES;
 }
 
+- (UIViewController *)interstitialAdRootViewController {
+    return self;
+}
+
 #pragma mark - Application Notifications
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
@@ -766,11 +790,11 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     NSMutableArray *constraints = [NSMutableArray array];
     
     // Horizontal (content view)
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentWrapperView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentWrapperView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0f constant:0.0f]];
     
     // Vertical (content view)
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentWrapperView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:0.0f]];
     
     // Bottom hook
     id referencedItem;
@@ -797,7 +821,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         if (bottomHookedToAdvertisingView) {
             if (hidden) {
                 // Advertising view may go under bottom layout guide
-                if ([self respondsToSelector:@selector(bottomLayoutGuide)]) {
+                if (NO && [self respondsToSelector:@selector(bottomLayoutGuide)]) {
                     referencedItem = [self bottomLayoutGuide];
                     referencedAttribute = NSLayoutAttributeTop;
                 }
@@ -817,7 +841,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         }
     }
     
-    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentViewController.view attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:referencedItem attribute:referencedAttribute multiplier:1.0f constant:0.0f]];
+    [constraints addObject:[NSLayoutConstraint constraintWithItem:self.contentWrapperView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:referencedItem attribute:referencedAttribute multiplier:1.0f constant:0.0f]];
     
     return constraints;
 }
@@ -980,7 +1004,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     self.interstitialAdReceivedDuringCurrentSession = YES;
     
     if ([self shouldPresentReceivedInterstitialAd:ad]) {
-        [ad presentFromRootViewController:self];
+        [ad presentFromRootViewController:[self interstitialAdRootViewController]];
     }
 }
 

@@ -8,6 +8,8 @@
 
 #import "AdViewController.h"
 
+#define USES_INTERSTITIAL_ADS   0
+
 @interface AdViewController ()
 
 @end
@@ -29,7 +31,7 @@
 static BOOL AppReceivedInterstitial = NO;
 
 - (BOOL)shouldRequestInterstitialAd {
-    return !AppReceivedInterstitial;
+    return USES_INTERSTITIAL_ADS && !AppReceivedInterstitial;
 }
 
 - (void)interstitialDidReceiveAd:(GADInterstitial *)ad {

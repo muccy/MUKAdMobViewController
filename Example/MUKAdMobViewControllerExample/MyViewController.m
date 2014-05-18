@@ -13,9 +13,11 @@
 @property (nonatomic) NSTimer *titleTimer;
 @property (nonatomic) BOOL constraintsAdded;
 @property (nonatomic) NSLayoutConstraint *bottomConstraint;
+@property (nonatomic, readonly) AdViewController *parentAdViewController;
 @end
 
 @implementation MyViewController
+@dynamic parentAdViewController;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -56,7 +58,7 @@
         [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-[label]" options:0 metrics:nil views:@{ @"label" : self.contentsLabel }]];
     }
     
-    AdViewController *adViewController = (AdViewController *)self.parentViewController;
+    AdViewController *adViewController = self.parentAdViewController;
     
     if (self.bottomConstraint) {
         [adViewController.view removeConstraint:self.bottomConstraint];
@@ -94,11 +96,30 @@
     
     AdViewController *adViewController = [[AdViewController alloc] initWithContentViewController:contentViewController];
     
-    AdViewController *parentAdViewController = (AdViewController *)[self parentViewController];
+    AdViewController *parentAdViewController = self.parentAdViewController;
     adViewController.bannerAdUnitID = parentAdViewController.bannerAdUnitID;
     adViewController.interstitialAdUnitID = parentAdViewController.interstitialAdUnitID;
     
     [self.navigationController pushViewController:adViewController animated:YES];
+}
+
+#pragma mark - Accessors
+
+- (AdViewController *)parentAdViewController {
+    UIViewController *inspectedViewController = self.parentViewController;
+    AdViewController *foundViewController = nil;
+    
+    do {
+        if ([inspectedViewController isKindOfClass:[AdViewController class]])
+        {
+            foundViewController = (AdViewController *)inspectedViewController;
+        }
+        else {
+            inspectedViewController = inspectedViewController.parentViewController;
+        }
+    } while (!foundViewController && inspectedViewController);
+    
+    return foundViewController;
 }
 
 #pragma mark - Private

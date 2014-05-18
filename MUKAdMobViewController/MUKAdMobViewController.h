@@ -392,6 +392,15 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @return YES if you want to present interstitial ad. Default is YES.
  */
 - (BOOL)shouldPresentReceivedInterstitialAd:(GADInterstitial *)ad;
+
+/**
+ If -shouldPresentReceivedInterstitialAd: returns YES, this view controller is
+ used to present interstitial ad.
+ It defaults to self.
+ 
+ @return View controller which presents interstitial ad.
+ */
+- (UIViewController *)interstitialAdRootViewController;
 @end
 
 

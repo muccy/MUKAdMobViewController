@@ -550,6 +550,13 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
     return YES;
 }
 
+- (void)requestGeolocationAuthorization {
+    if ([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)])
+    {
+        [self.locationManager requestWhenInUseAuthorization];
+    }
+}
+
 #pragma mark - Interstitial Ad
 
 - (BOOL)shouldRequestInterstitialAd {
@@ -897,6 +904,8 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 
 - (void)startLocationManagerWithIntent:(MUKAdMobViewControllerGeolocationIntent)intent withTimeoutTimer:(BOOL)useTimeoutTimer
 {
+    [self requestGeolocationAuthorization];
+    
     self.geolocationIntent |= intent;
     [self.locationManager startUpdatingLocation];
     

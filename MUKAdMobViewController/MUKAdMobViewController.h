@@ -353,6 +353,14 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  is not kCLErrorLocationUnknown.
  */
 - (BOOL)shouldStopGeolocationForError:(NSError *)error;
+
+/**
+ Request authorization to user.
+ 
+ By default it calls -requestWhenInUseAuthorization if available (iOS 8).
+ This method is called before to start location manager.
+ */
+- (void)requestGeolocationAuthorization;
 @end
 
 

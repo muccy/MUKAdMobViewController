@@ -682,7 +682,11 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         self.adViewExpanded = YES;
         
         // Retain view
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        // TODO: mediatedAdView is deprecated but it works. I should find another way to keep a strong reference to mediated view.
         self.expandedAdView = self.bannerView.mediatedAdView;
+#pragma clang diagnostic pop
         
         // Retain delegate
         [self retainDelegateOfExpandedAdView:self.expandedAdView];

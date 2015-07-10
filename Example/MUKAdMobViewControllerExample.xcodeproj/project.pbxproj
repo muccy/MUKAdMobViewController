@@ -36,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		03594147B4654DDC4D3DE803 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		0680BDC6178EA12F00FD3EC0 /* AdViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdViewController.h; sourceTree = "<group>"; };
 		0680BDC7178EA12F00FD3EC0 /* AdViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AdViewController.m; sourceTree = "<group>"; };
 		06A2CCA4178D91D90019E0C4 /* MUKAdMobViewControllerExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MUKAdMobViewControllerExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -57,7 +58,7 @@
 		06A2CCDC178DA1F70019E0C4 /* MyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyViewController.h; sourceTree = "<group>"; };
 		06A2CCDD178DA1F70019E0C4 /* MyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyViewController.m; sourceTree = "<group>"; };
 		06A2CCDE178DA1F70019E0C4 /* MyViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MyViewController.xib; sourceTree = "<group>"; };
-		457BC8C41FB948458C807E13 /* Pods/Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Pods/Pods.xcconfig; sourceTree = SOURCE_ROOT; };
+		60F9EE4C2EFC2443F85328A3 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 		C5C9CEF085B94F86B58A815F /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -93,7 +94,7 @@
 				06A2CCC6178D91D90019E0C4 /* MUKAdMobViewControllerExampleTests */,
 				06A2CCA6178D91D90019E0C4 /* Frameworks */,
 				06A2CCA5178D91D90019E0C4 /* Products */,
-				457BC8C41FB948458C807E13 /* Pods/Pods.xcconfig */,
+				1BD5B4E96D780DAFB8EC73DF /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -161,6 +162,15 @@
 				06A2CCC9178D91D90019E0C4 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		1BD5B4E96D780DAFB8EC73DF /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				60F9EE4C2EFC2443F85328A3 /* Pods.debug.xcconfig */,
+				03594147B4654DDC4D3DE803 /* Pods.release.xcconfig */,
+			);
+			name = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -269,7 +279,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		9C5A1A57193946F480CDA637 /* Check Pods Manifest.lock */ = {
@@ -411,7 +421,7 @@
 		};
 		06A2CCD1178D91D90019E0C4 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 457BC8C41FB948458C807E13 /* Pods/Pods.xcconfig */;
+			baseConfigurationReference = 60F9EE4C2EFC2443F85328A3 /* Pods.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -426,7 +436,7 @@
 		};
 		06A2CCD2178D91D90019E0C4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 457BC8C41FB948458C807E13 /* Pods/Pods.xcconfig */;
+			baseConfigurationReference = 03594147B4654DDC4D3DE803 /* Pods.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;

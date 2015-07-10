@@ -832,14 +832,16 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         if (bottomHookedToAdvertisingView) {
             if (hidden) {
                 // Advertising view may go under bottom layout guide
+                /** DISABLED CODE
                 if (NO && [self respondsToSelector:@selector(bottomLayoutGuide)]) {
                     referencedItem = [self bottomLayoutGuide];
                     referencedAttribute = NSLayoutAttributeTop;
                 }
                 else {
-                    referencedItem = self.advertisingView;
-                    referencedAttribute = NSLayoutAttributeTop;
-                }
+                 **/
+                referencedItem = self.advertisingView;
+                referencedAttribute = NSLayoutAttributeTop;
+                /** } **/
             }
             else {
                 referencedItem = self.advertisingView;

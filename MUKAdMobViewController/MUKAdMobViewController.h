@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
-#import "GADBannerView.h"
-#import "GADInterstitial.h"
+#import <GoogleMobileAds/GADBannerView.h>
+#import <GoogleMobileAds/GADInterstitial.h>
 #import <CoreLocation/CoreLocation.h>
 
 typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {

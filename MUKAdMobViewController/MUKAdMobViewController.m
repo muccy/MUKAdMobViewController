@@ -618,8 +618,7 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         interstitialClass = [GADInterstitial class];
     }
     
-    GADInterstitial *interstitial = [[interstitialClass alloc] init];
-    interstitial.adUnitID = self.interstitialAdUnitID;
+    GADInterstitial *interstitial = [[interstitialClass alloc] initWithAdUnitID:self.interstitialAdUnitID];
     interstitial.delegate = self;
     return interstitial;
 }

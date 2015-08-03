@@ -1,7 +1,7 @@
 PODS:
-  - Google-Mobile-Ads-SDK (6.12.2)
-  - MUKAdMobViewController (1.2.4):
-    - Google-Mobile-Ads-SDK (~> 6.6)
+  - Google-Mobile-Ads-SDK (7.4.0)
+  - MUKAdMobViewController (1.2.5):
+    - Google-Mobile-Ads-SDK (~> 7.0)
 
 DEPENDENCIES:
   - MUKAdMobViewController (from `..`)
@@ -11,7 +11,7 @@ EXTERNAL SOURCES:
     :path: ..
 
 SPEC CHECKSUMS:
-  Google-Mobile-Ads-SDK: 40217793219e3466f24cb884d1d44023f37a20ee
-  MUKAdMobViewController: 66d30b0649cfa965c5703c499b9c02e39ab4ea7a
+  Google-Mobile-Ads-SDK: ff8ce0c4b495c60113a6f37916956aab9504d527
+  MUKAdMobViewController: bf4528133b7c063181f20d07f5ae90a6908487a2
 
-COCOAPODS: 0.37.2
+COCOAPODS: 0.38.2

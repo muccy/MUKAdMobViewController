@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
-#import <Google-Mobile-Ads-SDK/GADBannerView.h>
-#import <Google-Mobile-Ads-SDK/GADInterstitial.h>
+#import <GoogleMobileAds/GADBannerView.h>
+#import <GoogleMobileAds/GADInterstitial.h>
 #import <CoreLocation/CoreLocation.h>
 
 NS_ASSUME_NONNULL_BEGIN

@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import "AdViewController.h"
 #import "MyViewController.h"
 
 #define USES_OPAQUE_TAB_BAR                     1

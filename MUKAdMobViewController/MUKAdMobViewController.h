@@ -3,6 +3,8 @@
 #import <GoogleMobileAds/GADInterstitial.h>
 #import <CoreLocation/CoreLocation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
     MUKAdMobAdvertisingNetworkAdMob = 0,
     MUKAdMobAdvertisingNetworkDFP
@@ -86,24 +88,24 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  AdMob banner view.
  If bannerAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPBannerView is alloc'd.
  */
-@property (nonatomic, strong, readonly) GADBannerView *bannerView;
+@property (nonatomic, strong, readonly, nullable) GADBannerView *bannerView;
 
 /**
  AdMob interstitial.
  If interstitialAdNetwork is MUKAdMobAdvertisingNetworkDFP, a DFPInterstitial is 
  alloc'd.
  */
-@property (nonatomic, strong, readonly) GADInterstitial *interstitial;
+@property (nonatomic, strong, readonly, nullable) GADInterstitial *interstitial;
 
 /**
  AdMob Ad Unit ID which will be used to create new banner views.
  */
-@property (nonatomic, copy) NSString *bannerAdUnitID;
+@property (nonatomic, copy, nullable) NSString *bannerAdUnitID;
 
 /**
  AdMob Ad Unit ID which will ne used to create new interstitials.
  */
-@property (nonatomic, copy) NSString *interstitialAdUnitID;
+@property (nonatomic, copy, nullable) NSString *interstitialAdUnitID;
 
 /**
  View where bannerView is embedded.
@@ -113,7 +115,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
 /**
  View expanded from bannerView.
  */
-@property (nonatomic, strong, readonly) UIView *expandedAdView;
+@property (nonatomic, strong, readonly, nullable) UIView *expandedAdView;
 
 /**
  Is banner view expanded? You should check this boolean to know, not expandedAdView.
@@ -158,7 +160,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  
  This property is nilled out when application goes background.
  */
-@property (nonatomic, readonly) NSError *lastLocationManagerError;
+@property (nonatomic, readonly, nullable) NSError *lastLocationManagerError;
 
 /**
  Default initializer.
@@ -166,7 +168,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @param contentViewController View controller used to display contents.
  @return New instance.
  */
-- (instancetype)initWithContentViewController:(UIViewController *)contentViewController;
+- (instancetype)initWithContentViewController:(UIViewController *)contentViewController NS_DESIGNATED_INITIALIZER;
 @end
 
 
@@ -179,7 +181,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @param completionHandler An handler called after transition is completed. If
  `animated` is `NO`, `completionHandler` is called immediately.
  */
-- (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler;
+- (void)setAdvertisingViewHidden:(BOOL)hidden animated:(BOOL)animated completion:(void (^ __nullable)(BOOL finished))completionHandler;
 
 /**
  Shortend to show/hide a banner.
@@ -193,7 +195,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @param animated If `YES` transition is animated.
  @param completionHandler An handler called after transition is completed.
  */
-- (void)toggleAdvertisingViewVisibilityAnimated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler;
+- (void)toggleAdvertisingViewVisibilityAnimated:(BOOL)animated completion:(void (^ __nullable)(BOOL finished))completionHandler;
 
 /**
  Creates new banner view.
@@ -202,7 +204,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  this method set banner view delegate to `self` and it setups other view defaults.
  It returns nil if requested ad size is `kGADAdSizeInvalid`.
  */
-- (GADBannerView *)newBannerView;
+- (GADBannerView * __nullable)newBannerView;
 
 /**
  Removes bannerView.
@@ -241,7 +243,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @param animated If `YES` transition is animated.
  @param completionHandler An handler called after transition is completed.
  */
-- (void)setAdvertisingViewExpanded:(BOOL)expanded toSize:(CGSize)targetSize animated:(BOOL)animated completion:(void (^)(BOOL finished))completionHandler;
+- (void)setAdvertisingViewExpanded:(BOOL)expanded toSize:(CGSize)targetSize animated:(BOOL)animated completion:(void (^ __nullable)(BOOL finished))completionHandler;
 
 /**
  A chance to retain expanded advertising view's delegate.
@@ -334,7 +336,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @param location The location to be inspected.
  @return YES is location is recent and accurate enough.
  */
-- (BOOL)isValidLocation:(CLLocation *)location;
+- (BOOL)isValidLocation:(CLLocation * __nullable)location;
 
 /**
  Decide to start geolocation before to request new ad.
@@ -352,7 +354,7 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  @return YES if error can not be recovered. Default returns YES when error code
  is not kCLErrorLocationUnknown.
  */
-- (BOOL)shouldStopGeolocationForError:(NSError *)error;
+- (BOOL)shouldStopGeolocationForError:(NSError * __nullable)error;
 
 /**
  Request authorization to user.
@@ -430,3 +432,5 @@ typedef NS_ENUM(NSInteger, MUKAdMobAdvertisingNetwork) {
  */
 - (void)applicationWillEnterForeground:(NSNotification *)notification;
 @end
+
+NS_ASSUME_NONNULL_END

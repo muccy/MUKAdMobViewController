@@ -2,6 +2,34 @@
 #import "DFPBannerView.h"
 #import "DFPInterstitial.h"
 
+NS_ASSUME_NONNULL_BEGIN
+@interface MUKAdMobViewControllerTimerTarget : NSObject
+@property (nonatomic, copy) void (^handler)(NSTimer *);
+- (instancetype)initWithHandler:(void (^)(NSTimer *))handler;
+- (void)timerFired:(NSTimer *)timer;
+@end
+NS_ASSUME_NONNULL_END
+
+@implementation MUKAdMobViewControllerTimerTarget
+
+- (instancetype)initWithHandler:(void (^ __nonnull)(NSTimer * __nonnull))handler
+{
+    self = [super init];
+    if (self) {
+        _handler = [handler copy];
+    }
+    
+    return self;
+}
+
+- (void)timerFired:(NSTimer * __nonnull)timer {
+    self.handler(timer);
+}
+
+@end
+
+#pragma mark -
+
 static NSTimeInterval const kAdvertisingAnimationDuration = 0.3;
 static NSTimeInterval const kAdvertisingExpandingAnimationDuration = 0.3;
 
@@ -831,14 +859,16 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         if (bottomHookedToAdvertisingView) {
             if (hidden) {
                 // Advertising view may go under bottom layout guide
+                /** DISABLED CODE
                 if (NO && [self respondsToSelector:@selector(bottomLayoutGuide)]) {
                     referencedItem = [self bottomLayoutGuide];
                     referencedAttribute = NSLayoutAttributeTop;
                 }
                 else {
-                    referencedItem = self.advertisingView;
-                    referencedAttribute = NSLayoutAttributeTop;
-                }
+                 **/
+                referencedItem = self.advertisingView;
+                referencedAttribute = NSLayoutAttributeTop;
+                /** } **/
             }
             else {
                 referencedItem = self.advertisingView;
@@ -938,7 +968,23 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 - (void)startLocationManagerTimeoutTimer {
     [self cancelLocationManagerTimeoutTimer];
     
-    self.locationManagerTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kLocationManagerTimeoutInterval target:self selector:@selector(locationManagerTimeoutTimerFired:) userInfo:nil repeats:NO];
+    // Timer retains its target until invalidation, so I detach target in order
+    // not to keep in memory myself
+    __weak typeof(self) weakSelf = self;
+    MUKAdMobViewControllerTimerTarget *const target = [[MUKAdMobViewControllerTimerTarget alloc] initWithHandler:^(NSTimer *__nonnull timer)
+    {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf.lastLocationManagerError = nil;
+            strongSelf.lastLocationStoppedForTimeout = YES;
+            
+            // Request ad if needed
+            [strongSelf requestNewBannerAdCheckingLocationManagerIntent];
+            [strongSelf requestNewInterstitialAdCheckingLocationManagerIntent];
+        }
+    }];
+    
+    self.locationManagerTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kLocationManagerTimeoutInterval target:target selector:@selector(timerFired:) userInfo:nil repeats:NO];
 }
 
 - (void)cancelLocationManagerTimeoutTimer {
@@ -946,15 +992,6 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
         [self.locationManagerTimeoutTimer invalidate];
         self.locationManagerTimeoutTimer = nil;
     }
-}
-
-- (void)locationManagerTimeoutTimerFired:(NSTimer *)timer {
-    self.lastLocationManagerError = nil;
-    self.lastLocationStoppedForTimeout = YES;
-    
-    // Request ad if needed
-    [self requestNewBannerAdCheckingLocationManagerIntent];
-    [self requestNewInterstitialAdCheckingLocationManagerIntent];
 }
 
 #pragma mark - Private — Banner Request

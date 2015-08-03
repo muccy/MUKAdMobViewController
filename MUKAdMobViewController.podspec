@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name      = 'MUKAdMobViewController'
   s.platform  = :ios, '6.1'
-  s.version   = '1.2.6'
+  s.version   = '1.2.7'
   s.summary   = 'View controller which manages an AdMob banner, geolocation and interstitial presentation.'
   s.license   = { :type => 'BSD 3-Clause', :file => 'LICENSE' }
   s.homepage  = 'https://github.com/muccy/MUKAdMobViewController'

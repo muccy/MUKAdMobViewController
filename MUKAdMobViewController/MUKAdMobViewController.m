@@ -1,6 +1,7 @@
 #import "MUKAdMobViewController.h"
-#import "DFPBannerView.h"
-#import "DFPInterstitial.h"
+#import <GoogleMobileAds/DFPBannerView.h>
+#import <GoogleMobileAds/DFPInterstitial.h>
+#import <GoogleMobileAds/DFPRequest.h>
 
 NS_ASSUME_NONNULL_BEGIN
 @interface MUKAdMobViewControllerTimerTarget : NSObject
@@ -489,7 +490,15 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 }
 
 - (GADRequest *)newBannerAdRequest {
-    GADRequest *request = [GADRequest request];
+    Class requestClass;
+    if (self.bannerAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        requestClass = [DFPRequest class];
+    }
+    else {
+        requestClass = [GADRequest class];
+    }
+    
+    GADRequest *const request = [requestClass request];
     
     CLLocation *location = self.locationManager.location;
     if ([self isValidLocation:location]) {
@@ -624,7 +633,15 @@ typedef NS_OPTIONS(NSInteger, MUKAdMobViewControllerGeolocationIntent) {
 }
 
 - (GADRequest *)newInterstitialRequest {
-    GADRequest *request = [GADRequest request];
+    Class requestClass;
+    if (self.bannerAdNetwork == MUKAdMobAdvertisingNetworkDFP) {
+        requestClass = [DFPRequest class];
+    }
+    else {
+        requestClass = [GADRequest class];
+    }
+    
+    GADRequest *const request = [requestClass request];
     
     CLLocation *location = self.locationManager.location;
     if ([self isValidLocation:location]) {

@@ -15,7 +15,7 @@ See sample project to see usage.
 
 Installation
 ------------
-Use Cocoapods. Really.
+Use CocoaPods. Really.
 
 Otherwise you need to:
 
